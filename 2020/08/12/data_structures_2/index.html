@@ -1,0 +1,2923 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="Data Structures Supreme"><meta name="keywords" content><meta name="author" content="Magolor,undefined"><meta name="copyright" content="Magolor"><title>Data Structures Supreme | Magolor</title><link rel="shortcut icon" href="/Magolor-OC-trans-avatar-rd-64.ico"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/reveal.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/theme/night.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/css/zenburn.min.css"></head><body><div class="reveal"><div class="slides"><section data-markdown data-separator="=====" data-separator-vertical="===" data-charset="utf-8"><script type="text/template"><font size=6px>
+<!-- .slide: data-background="#660874" -->
+
+## 数据结构
+
+## Data Structures <font color="gold">Supreme
+
+#### By Magolor
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+- 我们今天将(可能)会cover的内容:
+
+- 树状数组, 线段树及其变体, ST表, 根号算法, ODT, Leftist, FhqTreap, 链分治, 点分治, LCT......
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 树状数组 <a href="https://magolor.cn/2018/08/27/2018-08-27-blog-01" target="_blank">树状数组黑科技讲义</a>
+- 考虑一个数组，每个点$i$维护`[i-lowbit(i)+1,i]`的和。这样每个位置都被$O(\log n)$个节点覆盖，且每个前缀可以拆成$O(\log n)$个节点。
+
+- `i+(i&-i)`可视化: "父亲"节点("祖先"路径)
+
+- `i-(i&-i)`可视化: "前驱"节点("前驱"路径)
+
+树状数组这东西特别适合Excel演示。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 树状数组 <a href="https://magolor.cn/2018/08/27/2018-08-27-blog-01" target="_blank">树状数组黑科技讲义</a>
+- 黑科技: 区间树状数组
+
+- 树状数组支持区间操作(满足可减性、支持标记永久化)。
+
+- 标记永久化，对于每个节点维护这个节点范围内的和以及这个节点范围内的标记。
+
+- 查询: 不严格前驱的和 +   严格祖先的标记
+
+- 修改: 不严格前驱的和 + 不严格祖先的标记
+
+- 其中一个点的前驱为`i-(i&-i)`，祖先为`i+(i&-i)`。 
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 简单线段树
+
+线段树这东西也特别适合Excel演示。
+
+```c++
+#define MAXN 262144
+#define lc(x) (x<<1)
+#define rc(x) (x<<1|1)
+#define mid (lef+rig>>1)
+#define PS(p) (t[p] = t[lc(p)]+t[rc(p)])
+#define TG(p,v) (l[p] += v, t[p] += v)
+#define LZ(p) (TG(lc(p),l[p]), TG(rc(p),l[p]), l[p] = 0)
+int t[524289], l[524289];
+```
+
+注意一下空间: 大小上界应该是$2^{\lceil{\log_2n}\rceil+1}$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 简单线段树
+
+一行线段树是不可能的，不过可以line per function。
+
+```c++
+inline int QP(int p, int lef, int rig, int x)
+{return lef^rig?LZ(p),x<=mid?QP(lc(p),lef,mid,x):QP(rc(p),mid+1,rig,x):t[p];}
+inline void EP(int p, int lef, int rig, int x, int v)
+{lef^rig?LZ(p),x<=mid?EP(lc(p),lef,mid,x,v):EP(rc(p),mid+1,rig,x,v),PS(p):t[p]+=v;}
+inline int QS(int p, int lef, int rig, int L, int R)
+{return L^lef||R^rig?LZ(p),(L<=mid?QS(lc(p),lef,mid,L,min(mid,R)):0)+(R>mid?QS(rc(p),mid+1,rig,max(L,mid+1),R):0):t[p];}
+inline void ES(int p, int lef, int rig, int L, int R, int v)
+{L^lef||R^rig?LZ(p),L<=mid?ES(lc(p),lef,mid,L,min(mid,R),v),0:0,R>mid?ES(rc(p),mid+1,rig,max(L,mid+1),R,v),0:0,PS(p):TG(p,v);}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 简单线段树
+
+- 线段树的永久化标记
+
+- 和树状数组区别不大
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 51Nod 1598
+
+![](/img/data_structures_2/51Nod1598.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+- 假设所有$k$都等于$1$的时候怎么做？
+
+- 考虑绝对值的几何意义，即是一维数轴上存在若干个点，求一个点，使得其他点到这个点的距离和最小。每次插入一个数$b$，然后动态维护中位数以及距离和就可以了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 51Nod 1598
+
+- 那么有$\vert kx+b \vert = \vert k \vert \vert x+b/k \vert$，所以相当于一个加权距离(可以视作$b/k$位置有了$k$个点)。对所有坐标离散化，用线段树维护即可，查询时在线段树上二分。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 从给定的$n$个区间中选取$m$个，要求包含同一个位置，同时希望最长区间减最短区间值最小。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 区间选择问题考虑排序。这道题将区间按照长度排序。
+
+- 如果枚举选择区间的最长长度和最短长度，问题变成:
+
+- 选取编号$[L,R]$中的$m$个区间，求是否存在某个位置被覆盖$m$次。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 啊！就这么办！
+
+- 我们就有一个总复杂度$O(n^4)$的优秀算法啦！
+
+![](/img/data_structures_2/WTF.gif)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 不就是区间加么，线段树可以做到$O(n \log n)$！
+
+- 我们就有一个总复杂度$O(n^3 \log n)$的优秀算法啦！
+
+![](/img/data_structures_2/WTF.gif)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 简单改一改枚举顺序。
+
+- 我们就有一个总复杂度$O(n^2 \log n)$的优秀算法啦！
+
+![](/img/data_structures_2/WTF.gif)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 答案满足单调性。左端点递增，右端点也递增。
+
+- 我们就有一个总复杂度$O(n \log n)$的优秀算法啦！
+
+![](/img/data_structures_2/WTF2.jpg)
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树变体
+
+- 主席树/带修主席树 与 多维数点问题
+
+- 均摊线段树
+
+- 线段树分治
+
+- 线段树合并/分裂
+
+- 吉利线段树
+
+- 李超树
+
+- 优化建图
+
+- 维护连通性......
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 简单主席树
+
+line per function
+
+```c++
+#define New(x) (t[++c] = t[x], c)
+#define PS(p) (c(p) = c(lc(p))+c(rc(p)), s(p) = s(lc(p))+s(rc(p)))
+void ED(int p, int lef, int rig, int x)
+{lef^rig?x<=mid?ED(lc(p)=New(lc(p)),lef,mid,x):ED(rc(p)=New(rc(p)),mid+1,rig,x),PS(p):(c(p)=1,s(p)=x);}
+int BS(int a, int b, int lef, int rig, int K)
+{return lef^rig?mid<=K+c(lc(b))-c(lc(a))?BS(rc(a),rc(b),mid+1,rig,K+c(lc(b))-c(lc(a))):BS(lc(a),lc(b),lef,mid,K):K;}
+ll QP(int a, int b, int lef, int rig, int R)
+{return c(b)>c(a)?R^rig?R> mid?s(lc(b))-s(lc(a))+QP(rc(a),rc(b),mid+1,rig,R):QP(lc(a),lc(b),lef,mid,R):s(b)-s(a):0;}
+ll QS(int a, int b, int lef, int rig, int L)
+{return c(b)>c(a)?L^lef?L<=mid?s(rc(b))-s(rc(a))+QS(lc(a),lc(b),lef,mid,L):QS(rc(a),rc(b),mid+1,rig,L):s(b)-s(a):0;}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 916D
+
+- 插入key:value(存在则修改)，删除key(不存在则无视)，查询<=某个key的value的value和，回到第i个版本。
+
+- $q \le 10^5$, value$\le 10^9$，key是长度不超过$15$的字符串。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 916D
+
+- 不考虑版本回溯: 动态开点线段树维护权值为下标的数字个数
+
+- 版本回溯: 直接改主席树
+
+- 注意还需要查询key的value，再开一棵主席树
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 893F
+
+- 点带权树，每次查询$x$子树内距离$x$不超过$k$条边的点权最小值。强制在线。
+
+- $n \le 10^5, q \le 10^6$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 893F
+
+- 离线: (深度,DFS序)的二维数点，扫描线线段树
+
+- 在线: 直接改主席树
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### CodeChef FIBTREE
+
+- 树上: 路径加斐波那契数列，查询路径和，查询换根子树和(非破坏)，回到第i个版本。
+
+- $n,q \le 10^5, \mod 1000000009$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### CodeChef FIBTREE
+
+- 1: 区间加斐波那契数列区间和
+
+- 2: 树上加斐波那契数列路径和
+
+- 3: 树上加斐波那契数列换根子树和
+
+- 4: 2+3+版本回溯
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### CodeChef FIBTREE
+
+- 1: 区间加斐波那契数列区间和(区间加等比, 线段树)
+
+- 2: 树上加斐波那契数列路径和(树剖)
+
+- 3: 树上加斐波那契数列换根子树和(树剖+LCA)
+
+- 4: 2+3+版本回溯(树剖主席树区间加等比+LCA)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### CodeChef FIBTREE
+
+- 主席树区间加？
+
+- 永久化标记
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 带修主席树
+
+实质是树状数组套动态开点权值线段树，同时二分，line per function
+
+```c++
+void ED(int p, int lef, int rig, int x, int v)
+{lef<rig ? x <= mid ? ED(lc(p)?:lc(p)=++tot,lef,mid,x,v) : ED(rc(p)?:rc(p)=++tot,mid+1,rig,x,v), sum(p)=sum(lc(p))+sum(rc(p)) : sum(p)+=v;}
+inline void Add(int i, int v)
+{if(A[i]) for(rint j = i; j <= n; ED(rt[j],1,k,A[i],-1), j += j&-j); A[i] = v; for(rint j = i; j <= n; ED(rt[j],1,k,A[i],1), j += j&-j);}
+inline void Get(int C[], int &c, int i){for(c = 0; i; C[++c] = rt[i], i -= i&-i);}
+int QU(int lef, int rig, int k)
+{if(lef == rig) return lef; s = 0; for(rint i = 1; i <= cr; s += sum(lc(CR[i])), i++); for(rint i = 1; i <= cl; s -= sum(lc(CL[i])), i++);
+ for(rint i = 1; i <= cr; CR[i] = c(CR[i],s<k), i++); for(rint i = 1; i <= cl; CL[i] = c(CL[i],s<k), i++); return s >= k ? QU(lef,mid,k) : QU(mid+1,rig,k-s);}
+#define Query(L,R,K) (Get(CL,cl,L-1), Get(CR,cr,R), QU(1,k,K))
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1146
+
+- 点带权树，修改点权，查询路径第$k$大。
+
+- $n,q \le 8 \times 10^4$，$w_i \le 10^8$，卡空间($162\text{MB}$)。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1146
+
+- 条件反射: 一看到第$k$大，就想到求总数二分。
+
+- 树上主席树: 每个点维护到根的路径的信息
+
+- 按照DFS序存储主席树，则修改点权等价于子树区间修改主席树。
+
+- 卡空间：树剖LCA、权值离散化。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 二维数点问题
+
+- 离线：线段树/树状数组 + 扫描线
+
+- 在线：主席树
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 1191F
+
+- 给定平面上$n$个点，每次可以用$x \in [l,r],y \in [a,+\infty)$作为限制条件来得到一个点集。求能得到多少种不同的点集。
+
+- $n \le 10^5,x,y \le 10^9$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 1191F
+
+- 冷静一下: 如果$x$和$y$互不相同，那么任何一个点集由下端点、左端点和右端点唯一确定，且左右端点高于下端点。那么就有一个很简单的做法，对于每个点统计其左上方点数$l$和右上方点数$r$，以这个点为下顶点的点集就有$(l+1) \times (r+1)$个。统计一个点一侧的点数就是个二维数点，扫描线+离散化+树状数组就行了。$O(n \log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4540
+
+- $m$组询问区间$[L,R]$的所有子区间的最小值的和。
+
+- $n,m \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4540
+
+- 可以用单调栈预处理出每个数作为最小值的区间，就可以计算每个数的贡献了。
+
+- 将区间视作二维平面点$(L,R)$，每个数都是一个矩阵区间加: $l_i \le L \le i, i \le R \le r_i$。
+
+- 每个区间的最小值是唯一的，每个区间都只会被一个数贡献到，那么这个贡献可以等价于区间加。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4540
+
+- 考虑$L \le R$，实际上是先进行若干矩形加法，然后查询若干直角三角形的和。
+
+- 点加法我们会了。矩形加法怎么做？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4540
+
+- 矩形加法实际上就是加了一个一次函数。
+
+- 分别维护斜率和以及纵截距和就好了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 6302
+
+- $n \times m(n \ge m)$的01矩阵，单点修改或查询一个子矩形内部的最大全1正方形。
+
+- $n \times m \le 4 \times 10^6, q \le 2000$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 6302
+
+- 1: 无修改，查询全局最大全1长方形
+
+- 2: 无修改，查询全局最大全1正方形
+
+- 3: 无修改，查询子矩形最大全1正方形
+
+- 4: 单点修改，查询全局最大全1正方形
+
+- 5: 单点修改，查询$[l,r]$行的最大全1正方形
+
+- 6: 原问题(1+3+4+5)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 6302
+
+- 1: 无修改，查询全局最大全1长方形(悬线法DP/单调栈)
+
+- 2: 无修改，查询全局最大全1正方形(稍稍改进)
+
+- 3: 无修改，查询子矩形最大全1正方形(二分+SGT/ST)
+
+- 4: 单点修改，查询全局最大全1正方形($m$线性算法)
+
+- 5: 单点修改，查询$[l,r]$行的最大全1正方形(GSS)
+
+- 6: 原问题(1+3+4+5 = 单调队列DP+二分+线段树GSS)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 均摊线段树
+
+- 严格来说不能算是线段树变体
+
+- 但是这样的题目倒是不少
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### HackerRank factorial-array
+
+- 区间$+=1$，单点赋值，查询$\sum_{i=l}^r A[i]!$。
+
+- $n,q \le 10^5, \mod 1000000000$.
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### HackerRank factorial-array
+
+- $40! \mod 1000000000 = 0$.
+
+- 因此直接线段树维护区间最小值、最大值、区间和、区间加。
+
+- 若最小值大于等于$40$，~~放飞自我~~。
+
+- 若最小值等于最大值，~~放飞自我~~。
+
+- 否则递归暴力做区间加。每个点每次单点赋值后最多被加40次，复杂度$O(40n \log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 228
+
+- 区间加，区间开根下取整，区间和。
+
+- $n,q \le 10^5$, $A_i \le 10^5$.
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 228
+
+- 没有区间加: 开根几次就是$1$了，GSS4。
+
+- 然而即使有区间加，依然会趋同。
+
+- 像GSS4一样暴力即可.......
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 228
+
+- ......个锤子！
+
+- 3 4 3 4 3 4 3 4 没有一段区间是连续的，暴力开根
+
+- 1 2 1 2 1 2 1 2 这时再执行一次区间加$2$操作
+ 
+- 3 4 3 4 3 4 3 4
+
+![](/img/data_structures_2/WTF.gif)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 228
+
+- 只有完全平方数和完全平方数$-1$的组合会出现这样的魔幻现象。
+
+- 因此只有区间内最大值和最小值差大于1，再暴力开根
+
+- 否则，如果最大值不是完全平方数，会变成区间赋值
+
+- 否则，如果最大值是完全平方数，会变成区间减
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4869
+
+- 给定常数$c$，区间$A[i] = c^{A[i]}$，查询区间和。
+
+- $n,q \le 5 \times 10^4, \mod p, 0 \lt c \lt p \le 10^8$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4869
+
+- 扩展欧拉定理
+
+![](/img/data_structures_2/BZOJ4869.png)
+
+- 足够多次以后每个位置都是$c^{c^{c^{\cdots}}}$。是个常数。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4869
+
+- "足够多"即$\varphi^\ast(p)$，最坏情况下$\varphi^\ast(2^k) = k$。
+
+- 这样复杂度是$O(n \log n \log^2 p)$。
+
+- 预处理$\sqrt p$以下的快速幂$O(n \log n \log p)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树分治
+
+~~啊......就是像线段树那样的分治啊？~~
+
+![](/img/data_structures_2/WTF.gif)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Luogu 3733
+
+- 边带权有重边无自环连通无向图，加边、删边、修改边权，查询经过1号点边权异或和最大的环（可以是非简单环）。
+
+- $n,m \le 500, q \le 1000, A_i \le 2^w = 2^{1000}$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Luogu 3733
+
+- 经过1号点就是个骗局，走到1号点再走回来就行了
+
+- 异或意义下 非简单环 = 若干简单环的组合
+
+- 实际上就是所有简单环的异或和自由组合可以得到的最大异或和
+
+- 1. 所有简单环的异或和？
+
+- 2. 最大异或和？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Luogu 3733
+
+
+- 所有简单环的异或和可以直接DFS找出来，但是现在有修改要动态维护
+
+- 先只考虑插入，每次插入一条边会产生多个环，但是因为是异或记录一个就够了
+
+- 因为~~我们正在讲线段树分治~~这样不太能删除，也许可以考虑线段树分治
+
+- 现在有了所有简单环异或和，怎么求组合最大异或和
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Luogu 3733
+
+- 条件反射: 一看到最大异或和，就想到改造线性基。
+
+- 线性基也是不支持修改和删除的，所以肯定要线段树分治啦
+
+- 复杂度$O(n \log n \cdot w^2 / 32)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 198
+
+- 插入二元组$(a,c)$，删除二元组$(a,c)$，给出$x$查询$\min_{(a,c)} (a-x)^2+c$，回到以前版本。可离线。
+
+- $n,q \le 5 \times 10^5$，$a,x \le 10^6$，$c \le 10^{12}$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 198
+
+$$
+\min\lbrace(a-x)^2+c\rbrace = x^2 + \min\lbrace -2ax + (a^2+c) \rbrace
+$$
+
+- 因此就相当于要维护一个凸包，每次查询在凸包上二分。
+
+- 而且要支持可持久化，会形成一个版本树。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 198
+
+- 树形结构上点处插入一对$(a,c)$实质是子树修改。对于点删除可以拆分区间。
+
+- 凸包比较难删除，即使考虑线段树分治，按照DFS序遍历也要考虑末尾插入和末尾删除。（不满足均摊性质）
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 198
+
+- 注意到维护凸包为是为了查询一个式子的$\min$，是一个可拆分信息。
+
+- 线段树每个点建立自己的凸包。然后线段树整条路径二分。
+
+- $O(n \log n + q \log^2 n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 198
+
+- 可以把询问也插入到每个节点里，单调指针取代二分即可。
+
+- $O((n+q) log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树合并
+
+~~啊......就是像线段树那样的合并啊？~~
+
+![](/img/data_structures_2/WTF.gif)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树合并
+
+就一行
+
+```c++
+int Merge(int a, int b, int lef, int rig)
+{return a&&b?lef^rig?lc(a)=Merge(lc(a),lc(b),lef,mid),rc(a)=Merge(rc(a),rc(b),mid+1,rig):M(a,b),a:a|b;}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 2537
+
+- 二叉树每个点有$p$的概率是两个子节点权值最大值，$1-p$概率是最小值。叶节点权值给定且各不相同。求根节点取到各个权值的概率。
+
+- $n \le 3 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 2537
+
+- $f(i,j)$表示$i$取到全局第$j$小值的概率，直接DP $O(n^2)$。
+
+- 可以明显观察到DP过程中有前后缀和的查询。
+
+- 注意到$f(l,j)$和$f(r,j)$只有一个是可能的，于是可以线段树合并并维护前后缀和。
+
+- 具体地，递归到左儿子就加上另一棵树右儿子的贡献（类似CDQ），反之亦然。
+
+- $O(n \log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 266
+
+- 有根森林，A和B轮流操作每次删除一个点到根的路径，不能删者输。求A是否先手必胜。
+
+- $T \le 10, n \le 5 \times 10^4, \sum n \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 266
+
+- 条件反射: 一看到先手必胜，就想到SG。
+
+- 还记得SG吧：一个状态的SG值是所有后继状态的$\text{mex}$。一个局面的SG是所有子局面$\text{XOR}$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 266
+
+- 例如以$p$为根的子树内，$p$有四个儿子，则:
+
+- 若删除点$P$，得到的状态是四个子局面SG异或和。
+
+- 若删除子树中一个点，得到的的是三个子局面SG异或上被删子树的很多可能后继状态集合。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 266
+
+- 所以可以用线段树维护集合，需要支持集合的并、整体异或、查询$\text{mex}$。
+
+- 整体异或在权值域上的表现其实是翻转。查询$\text{mex}$二分即可。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树分裂
+
+~~啊......就是像线段树那样的分裂啊？~~
+
+![](/img/data_structures_2/WTF2.jpg)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树分裂
+
+就一行
+
+```c++
+void Split(int &a, int &b, int lef, int rig, int v)
+{a&&v<rig?v>=lef?b=++tot,Split(lc(a),lc(b),lef,mid,v),Split(rc(a),rc(b),mid+1,rig,v),lc(a)|rc(a)?:a=0,lc(b)|rc(b)?:b=0:(b=a,a=0):0;}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 911G
+
+- 一个序列，每次区间$[l,r]$将字符$x$都替换为$y$。求最终序列。
+
+- $n,q \le 2 \times 10^5, \vert \Sigma \vert \le 100$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 911G
+
+- $f[i][j]$表示$j$位置是否是字符$i$，就变成了一个`bitset`问题
+
+```c++
+f[l:r][y] |= f[l:r][x], f[l:r][x].reset()
+```
+
+事实上这样分块`bitset`一下就过了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 911G
+
+- 翻译一下操作，实质就是将一个集合的一段元素移动到另一个集合里。
+
+- 如果只是目标集合插入一段元素，那就是线段树合并。
+
+- 现在源集合要删除这一段元素，就要线段树分裂。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 吉利线段树(Segment Tree Beats)
+
+- 区间取顶取底操作的解决方案
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 164
+
+- 区间加，区间减并~~ReLU~~和$0$取$\max$，区间赋值，单点查询，单点查询历史最大值。
+
+- $n,q \le 5 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 164
+
+- 双标记线段树: 例如区间乘区间加:
+
+- `(ax+b)<=(cx+d) = (ac)x+(ad+b)`
+
+- 注意双标记有时间先后顺序
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 164
+
+- 同样地:
+
+- `max(x+a,b)<=max(x+c,d) = max(x+(a+c),max(a+d,b))`
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 164
+
+- 然而问题在于怎么维护单点的历史最大值
+
+- 注意到`max(x+a,b)`得到是~~一个ReLU函数的变形~~一条上折线，上折线的"交"还是上折线。
+
+- 也即`a`和`b`分别取历史最大值。问题在于标记的懒下放。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 164
+
+- 再单独维护一个历史最值标记，即最近一段时间直接在当前节点上发生的标记最值。
+
+- 下放时历史最值标记随之下传并清零。正确性证明是比较绕的。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 164
+
+- 标记下放：
+
+- 子节点最值标记 = 父节点最值标记$\Leftarrow$子节点最值标记
+
+- 子节点历史标记 = max(子节点历史标记, 父节点历史标记$\Leftarrow$子节点最值标记)
+
+- 这个就是吉利线段树的基本样貌啦。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3064
+
+- 区间加，区间赋值，查询区间最大值和区间历史最大值。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3064
+
+- 区间赋值: $\max(x + (-\infty), a)$
+
+- 区间加: $\max(x + a, -\infty)$
+
+- 因此和上一道题是一样的，唯一区别就是单点查历史最值变成区间查历史最值了
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3064
+
+- 当前最值 = 最值标记$\Leftarrow$当前最值
+
+- 历史最值 = max(历史最值, 历史标记$\Leftarrow$当前最值)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 169
+
+- 区间加，区间取底($\max$)，查询区间最小值和区间历史最小值。
+
+- $n,q \le 5 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 169
+
+- 注意到这回操作依然是取$\max$，但是要维护的却是最小值。
+
+- 吉利线段树真正的骚操作出现了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 169
+
+- 不失一般性，只考虑区间对$0$取$\max$操作:
+
+- 如果区间最小值也大于等于$0$，~~放飞自我~~。
+
+- 如果区间最小值小于$0$但是严格次小值大于等于$0$，加一个「区间最小值加标记」。
+
+- 如果严格次小值也小于$0$，暴力递归。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### UniversalOJ 169
+
+- 这样每个点就要维护，「区间最小值」，「区间严格次小值」，「区间最小值加标记」，「区间其他值加标记」，「区间最小值加历史最小标记」，「区间其他值加历史最小标记」，「历史最小值」
+
+- 均摊复杂度玄学（已被证明不会差于$O(q\log^2n)$，是否是$O(q\log n)$不清楚）
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 李超树
+
+- 区间取一次函数最值的解决方案
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### CodeChef STREETTA
+
+- 区间与等差数列取$\max$
+
+- $n \le 10^9$，$m \le 3 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### CodeChef STREETTA
+
+- 将一条线段$y = kx+b (x \in [l,r])$作为一个标记放在节点上。
+
+- 标记不合并直接下放或取代，比较中间点和斜率，总有半个线段是无用的。
+
+- 查询的时候像标记永久化那样查询沿途所有线段。
+
+- $O(q \log^2 n)$
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 优化建图
+
+- 不一定是线段树哦
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### HDU 5669
+
+- $n$个点有向图进行$m$组连边，每一组将编号$[a,b]$与$[c,d]$之间的边连成边权为$w$的完全二部图。在行走过程中可以选择免费走过至多$K$条边，求$S,T$最短路。
+
+- $n \le 5 \times 10^4, m \le 10^5, 0 \le K \le 10, 0 \le w \le 10^3$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+- 每组操作产生了$O(n^2)$条边！
+
+- 可以新建一个中转点，这样就只有$O(n)$条边了！
+
+- 然而还是不够......
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### HDU 5669
+
+- 线段树优化连边
+
+![](/img/data_structures_2/HDU5669.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+- 这样是$O(\log n)$个区间对接，只有$O(\log^2 n)$条边了！
+
+- 对这些区间再采用新建中转点的方法，就只有$O(\log n)$条边了！
+
+- 注意空间复杂度。
+
+- 哦等等，还有$K$条免费边呢？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+- 无关紧要
+
+- $dis(i,v)$表示使用了$i$次免费边到$v$的最短路，跑$K$次就行了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 6354
+
+- 无向带权完全图，$w(i,j) = c \times (i \oplus j)$。额外添加$m$条带权有向边求$S,T$最短路。
+
+- $n \le 10^5$，$m \le 5 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### LibreOJ 6354
+
+- 条件反射: 一看到异或，就想到按位操作。
+
+- 考虑一下一种$x$到$y$的方案，因为代价是异或，可以总拆成一位一位走，总代价不变。
+
+- 因此只需要$O(n \log n)$条边: $w(i,i \oplus 2^j) = 2^j$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+- ST表优化建图、主席树优化建图、前后缀优化建图、Trie优化建图......
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树维护连通性
+
+- 空前绝后的一两道题目
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1018
+
+- $2 \times n$点的网格，网格内加边，删边，查询连通性。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1018
+
+- 每个叶子节点维护一个方格的$C(4,2)$连通性:
+
+![](/img/data_structures_2/BZOJ1018_1.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1018
+
+- Floyd预处理转移
+
+![](/img/data_structures_2/BZOJ1018_2.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1018
+
+- 查询的时候分类讨论。
+
+![](/img/data_structures_2/BZOJ1018_3.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1018
+
+- ~~Talk is Cheap, Code It Yourself! I'm Out!~~
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### RMQ问题与ST表
+
+```c++
+#define ST(i,j) ST[j][i]
+inline ll RMQ(int L, int R){return d=ilogb(R-L+1),min(ST(L,d),ST(R-(1<<d)+1,d));}
+
+for(rint j = 0, l, i; (l=1<<j) <= N; j++) for(i = 1; i+l-1 <= N; i++)
+    ST(i,j) = j ? min(ST(i,j-1),ST(i+(l>>1),j-1)) : a[i];
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### Codeforces 689D
+
+- 给定两个等长数组，求有多少个区间满足$\max\lbrace a \rbrace = \min\lbrace b \rbrace$。
+
+- $n \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### Codeforces 689D
+
+- 固定左端点，随着右端点递增，$\max\lbrace a \rbrace$单调非降，$\min\lbrace b \rbrace$单调非增，可以二分出相等的区间。
+
+- 用ST表来进行区间最大和最小值的查询。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 多组询问整个序列有多少个子区间和$[L,R]$的$GCD$相同。
+
+- $n \le 10^5, a_i \le 10^9$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 如果只是求$[L,R]$的$GCD$，一个线段树就可以搞定了。
+
+- Claim: 固定一个端点的前后缀本质不同的$GCD$有$O(\log a_i)$种。(质数连乘)
+
+- Claim: 整个序列本质不同的$GCD$只有$O(n \log a_i)$种。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 那就把所有答案都求出来记下来吧。怎么找？固定端点二分$GCD$变化点。
+
+- 对于枚举的每个端点，二分$O(\log n)$，总共要二分$O(\log a_i)$次，每次查询的时候线段树$O(\log n)$，$GCD$是$O(\log a_i)$的。总复杂度近似为$O(n \log^4 n)$。也许还没暴力快。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 注意幻灯片的颜色。
+
+- 我们现在在讲什么？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- ST表维护GCD。
+
+- 复杂度$O(n \log^3 n)$能过。
+
+- $5000\text{ms}$时限，最快的程序也要$1000\text{ms}$。而线段树可以说是有一个$10 \sim 20$的常数吧。所以一个$\log$决定命运也没啥奇怪的。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 点带权树，每次询问$x,y$路径上点权的子集最大异或和。
+
+- $n \le 2 \times 10^4, q \le 2 \times 10^5, A_i \le 2^w = 2^{60}$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 条件反射: 一看到最大异或和，就想到线性基 $\times 2$
+
+- 所以怎么查询路径线性基的并呢？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 树剖线段树套线性基: 预处理$O(\log n)$次合并，查询$O(\log^2 n)$次合并，总复杂度$O((n+q)w^2\log^2n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 倍增线性基: 预处理$O(\log n)$次合并，查询每次$O(\log n)$次合并，总复杂度$O((n+q)w^2\log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 注意幻灯片的颜色。
+
+- 我们现在在讲什么？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 树剖ST表套线性基: 预处理$O(\log n)$次合并，查询每次$O(\log n)$次合并，总复杂度$O((n+q)w^2\log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### BZOJ 4568
+
+- 实际上还可以更好:
+
+- 离线点分治线性基: 点分治$O(n \log n)$次**插入**，查询每次$O(1)$次合并，总复杂度$O(nw \log n + qw^2)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 二维ST
+
+- $f[i][2^j][2^k]$。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 分块
+
+- ~~Talk is Cheap, Show Me the UGLY Code!~~
+
+- 说起来很简单，但总是写得太丑。
+
+```c++
+for(rint i = 1, j; i <= n; i += BLK)
+    for(I[i] = ++_, j = bl[i] = i, br[i] = min(i+BLK-1,n); j <= br[i]; j++)
+        bl[j] = bl[i], br[j] = br[i], I[j] = I[i];
+```
+
+`BLK`一般取2的次幂会比较舒服，求块号很方便。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 分块
+
+```c++
+inline void AD(int l, int r, int v)
+{
+    for(; bl[l]<l&&l<=r; c[l] += v, l++); for(; br[r]>r&&l<=r; c[r] += v, r--);
+    for(; l<=r; d[I[l]] += v, s[I[l]] += (br[l]-bl[l]+1)*v, l += BLK);
+}
+inline int QU(int l, int r)
+{
+    for(; bl[l]<l&&l<=r; Ans += c[r]+d[I[r]], l++);
+    for(; br[r]>r&&l<=r; Ans += c[r]+d[I[r]], r--);
+    for(; l<=r; Ans += s[I[l]], l += BLK);
+}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 966E
+
+- 点带权黑白树，翻转一个点的颜色并查询有多少个白点满足「子树内黑点个数超过其点权」。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 966E
+
+- 实际上就是每个白点有容量，实际上就是每个黑点使得到根的路径上白点容量$-= 1$。
+
+- 每次查询爆容量的点个数，即$\lt 0$的数字个数。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 966E
+
+- 到根的路径$\pm= 1$这个很好做，可以树剖+线段树/树状数组。
+
+- 然而怎么统计$\lt 0$的数字个数呢？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 966E
+
+- 注意幻灯片的颜色。
+
+- 我们现在在讲什么？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 966E
+
+- 使用分块作为树剖的数据结构（常见操作）。
+
+- $O(q \sqrt n \log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZROJ 139
+
+- 求一个序列有多少个子区间，满足「出现过的数出现次数都为奇数」。
+
+- $n \le 3 \times 10^4, A_i \le 10^6$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZROJ 139
+
+- 求一个序列有多少个子区间，满足「所有出现次数都为偶数」。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZROJ 139
+
+- 可以哈希！给每条数字一个随机哈希值，然后查询是否区间异或和为$0$！
+
+- 就是查询有多少对$l-1,r$满足$S[l-1] \oplus S[r] = 0$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZROJ 139
+
+- 但是对于奇数次，就要求每个数字出现少记录一次。
+
+- 和区间颜色数是很类似的。类似于"HH的项链"，每个数字第一次出现的时候，不计入。
+
+- 从右向左枚举左端点，将对应数字第二次出现的位置后面进行后缀异或，然后查询$0$的数量。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZROJ 139
+
+- 区间异或，查询一个数的个数？
+
+- 分块吧。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 896E
+
+- 区间所有大于$x$的数$-= x$，查询区间内$x$的个数。
+
+- $n,q,A_i \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 896E
+
+- 条件反射: 一看到序列上的迷惑行为，就想到~~树套树~~根号算法。
+
+- $f(i,j)$表示第$i$块内数字$j$的个数。考虑怎么做操作1。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 896E
+
+- 「大于$x$的数$-= x$」等价于「$-= x$」，「小于$x$的数$+= x$」，考虑块最大值$\max$:
+
+- 如果$2x \le \max$，则采用第二种等价形式，复杂度是$O(x)$（因为是值域存储）。
+
+- 如果$2x \gt \max$，则采用第一种等价形式，复杂度是$O(\max-x)$。
+
+- 每种操作都使得值域区间缩小了对应长度！均摊$O(1)$修改！
+
+- 总复杂度$O((n+q+A_i) \cdot \sqrt n \alpha(A_i))$（并查集）。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 896E
+
+- 不过需要注意一下实现细节
+
+- 为保证分块复杂度，整块合并的时候需要打合并标记。
+
+- 区间加减标记和并查集的合并标记是不可交换的，一种方便的实现是区间加减标记永久化。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Luogu 3863
+
+- 每秒进行一个操作：区间加减，或查询某个点在过去多长时间内权值不小于某个值。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+- 本质是一个三维数点问题：现在有一个(下标,权值)平面，沿着时间轴复制自身。复制后会有权值方向的批量修改。查询则是在(时间,权值)平面的二维数点。
+
+- 看上去很难做。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+- 套路: 所求的问题满足可加性（例如本题查询时间，可拆成分段时间之和）；无后效性（例如本题修改操作为区间加减，顺序无关）；变化均摊（每次复制只进行了1次操作）。在这种情况下，**对操作进行差分**。
+
+- 本题中，将(下标,权值)平面沿时间轴复制，转换视角为(时间,权值)平面沿下标复制。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+- 这样问题就变成了，一个序列(时间作为下标)，支持后缀加减或查询不小于某个数字的数字个数。
+
+- 分块。权值范围很大所以需要离线离散化，查询时需要二分。$O(n\sqrt n \log n)$。
+
+- 可以非常规大小分块$O(n\sqrt{n \log n})$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UVAL 7174
+
+- 点带权树上支持单点修改，「每$K$次单点修改操作以后进行一次查询路径和操作」作为一组操作。**不开启无限栈。**
+
+- $n \le 5 \times 10^5, Q \le 5 \times 10^4, K \le 10^3$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UVAL 7174
+
+- $5 \times 10^7$的修改，树剖线段树肯定过不去。
+
+- ~~我是不会告诉你们其实树剖树状数组莽一莽就过去了。~~
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UVAL 7174
+
+- 条件反射: 一看到修改和查询次数不对等，就想到平衡复杂度。
+
+- 修改是$5 \times 10^7$的，必须要$O(1)$；查询是$5 \times 10^4$，复杂度可以高一些。
+
+- $O(1)$单点修改？~~幻灯片颜色来走一下流程。直接分块啊！~~
+
+- 哦不对，这是棵树.......
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UVAL 7174
+
+- 老样子，分块作为树剖的数据结构，$O(Q(K+\sqrt n \log n))$。
+
+- 由于不开启无限栈，需要使用BFS树剖。
+
+- 但是还可以更好。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 树上分块(距离分块)
+
+- 将树分成若干块，每块选一个关键点作为代表，维护出与本块有关的信息。
+
+- 距离分块：算法复杂度与所在块直径有关，就需要分块时限制块的直径。
+
+- 方法：每一块高度如果超过`BLK`，就选一个关键点新建一块。因为每个关键点下面都一定有至少`BLK`个点，所以分块复杂度严格有保证。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UVAL 7174
+
+- 树上分块，查询路径和：LCA（因为不是复杂度瓶颈怎么搞都无所谓）以后拆成点到根的路径和。
+
+- 先小步暴力跳到关键点，然后在关键点之间暴力大步跳求出答案。
+
+- 修改的时候会影响到很多关键点（例如一个点有$O(\sqrt n)$个关键点儿子）
+
+- 但这些关键点的"块深度"是一样的，可以按照(块深度，DFS序)双关键字排序以后直接差分区间加。
+
+- $O(Q(K + \sqrt n))$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 4812
+
+- 点有色树，每次询问若干条树链的颜色集合并中「连续颜色长度的$k$次方和」的和。
+
+- $n \le 10^5, m \le 10^5, k \le 30, A_i \le 3 \times 10^4$，树链总条数$c \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 4812
+
+- 条件反射: 一看到树上的迷惑行为，就想到~~树上树套树~~根号算法。
+
+- 树上距离分块，直接预处理出答案两两关键点之间的路径（$32768$的`bitset`）。
+
+- 注意集合的并是不支持减法的。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 4812
+
+- 等等，为了保证`bitset`的复杂度，统计答案的时候也需要那个$/32$的系数！
+
+- 需要手写`bitset`，并分块预处理来维护连续区间$k$次方和（类似于GSS）。
+
+- 做不了$32$，也就能做$16$，$O(n\sqrt n + c(\sqrt n+32768/16))$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 块状链表
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 块状链表
+
+![](/img/data_structures_2/ORZJRYI.png)
+
+![](/img/data_structures_2/Giveup.jpg)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 块状链表
+
+- ~~Talk is Cheap, But I don't Want to Code!~~
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 普通莫队
+
+- 当$n$和$m$不同阶时，**注意莫队的复杂度是$O(n^2/S+mS)$所以块的大小应该取$O(\sqrt{n^2/m})$最优**。总复杂度$O(n\sqrt m)$。
+
+- 莫队的灵魂
+
+```c++
+inline bool operator < (Q a, Q b)
+{return a.u^b.u?a.u<b.u:(a.u&1)^(a.r<b.r);}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- $m$组询问区间$[l,r]$内权值在$[a,b]$之间的数字数和种类数。
+
+- $n \le 10^5, m \le 10^6$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- 数字数好做，不就是二维数点么。
+
+- 种类数就是莫队。复杂度$O(n \sqrt m \log n)$。
+
+- 还带个$\log$有点慢。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- 不用树状数组而用分块！
+
+- 诶，等等，这不是更慢了吗？
+
+- 经典直觉错误。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- 分块修改是$O(1)$的，查询操作是$O(B)$的，其中$B$是块数目$B = n/S = \sqrt m$，但是查询操作并不大。
+
+- 总复杂度是$O(n \sqrt m + mB) = O((n+m) \sqrt m)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 树上莫队(DFS分块)
+
+- 如果要在树上使用莫队算法，就是说原先的区间滑动，变成现在的路径滑动。就需要保证每一块路径滑动长度。
+
+- 路径问题显然是按DFS序进行滑动，那么就要保证每一块DFS序长度。
+
+- 具体地，DFS离开一个点的时候入栈，如果一个子树进入时和离开时栈高度差达到`BLK`就分成一块然后弹栈。
+
+- 一般要配合一个倍增LCA（不是复杂度瓶颈），莫队移动时翻过LCA的时候要注意一点。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforcese 852I
+
+- 点黑白带权树，每次查询一条路径上有多少对黑白点权值相等。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforcese 852I
+
+- 枚举权值，对于某个权值有$b$个黑点，$w$个白点，答案就是$b \times w$。
+
+- 实际上就是统计颜色数(这里是权值数)，经典莫队问题，上树！
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ~~根号~~5/3次算法: 带修莫队
+
+- 如果还有区间修改操作（也就是说查询操作是顺序相关的），怎么办？
+
+- (左分块,右端点)排序变为(左分块,右分块,时间)排序。
+
+- 一般假设$n = m$，取块大小为$O(n^{2/3})$，复杂度$O(n^{2/5})$。
+
+- ~~实际上枚举一下块大小跑跑测速就是了......~~
+
+- Trick: `swap`
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 940F
+
+- 单点查询，或查询区间「每个数字出现次数构成的集合的$\text{mex}$」（$0$次也算）。
+
+- $n,q \le 10^5, A_i \le 10^9$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 940F
+
+- ~~条件反射: 一看到$\text{mex}$，就想到放弃~~
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 940F
+
+- 条件反射: 一看到序列上的迷惑行为，就想到根号算法。 $\times 2$
+
+- 如果没有单点修改，维护出现次数显然可以莫队。
+
+- 那么就带修莫队啊。
+
+- 维护$\text{mex}$再来一个树状数组二分，$O(n^{5/3}\log n)$就炸了啊。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 940F
+
+- 求$\text{mex}$可以直接暴力，因为一个区间$[l,r]$内不同的出现次数只有$O(\sqrt{r-l+1})$！
+
+- $O(n\sqrt n + n^{5/3})$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UniversalOJ 58
+
+- 点有色树，给定颜色价值$v[]$和系数$w[]$，对于一条路径，一个颜色$j$出现了$c$次则贡献为$v[j] \times w[c]$。修改点颜色或查询路径贡献和。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### UniversalOJ 58
+
+- 树上带修改统计路径上颜色数。
+
+- 树上带修莫队。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### ODT(Old Driver Tree, 旧驱动~~树~~)
+
+- 参考均摊线段树
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 981G
+
+- 有$n$个空的```multiset```。操作:
+
+- 1. 区间$[l,r]$内的每个集合，如果不含有$x$，就插入$x$；否则不插入$x$，将这个集合复制一遍。
+
+- 2. 查询$[l,r]$内集合的元素个数和。
+
+- $n,q \le 2 \times 10^5, 1 \le x \le n$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 981G
+
+- 修改操作是"毁灭性"的: 一旦插入了$x$，从此以后都会有$x$了。对于一个固定$x$，一旦执行过一次操作1，以后永远都是操作2了。
+
+- 直观地来说: 想想最坏情况。
+
+- 具体地: 付出的复杂度都被创建区间时的复杂度均摊掉了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 981G
+
+- 在实践中往往用```map```来维护ODT。
+
+- 然后用线段树维护区间乘和区间加即可。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### ODT(旧驱动)
+
+```c++
+typedef map<int,int> Map; typedef pair<Map::iterator,Map::iterator> pjj;
+struct ODT
+{
+    Map S; inline int Get(int p){return S.lower_bound(p)->second;} inline void Split(int x){int _ = Get(x); S[x] = _;}
+    inline pjj Range(int l, int r){Split(l-1); Split(r); return make_pair(S.find(l-1),S.find(r));}
+}A;
+
+pjj j = A.Range(l,r); for(; j.second!=j.first; OPERATION(j.second--->second));
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 453E
+
+- 有$n$个容量为$c[i]$的桶，初始含有$s[i]$的水，每秒钟流入$d[i]$的水。有$q$次操作：在$t[j]$秒取走一个区间桶内的所有水。求每次从操作得到的水量。
+
+- $n,q,d,s,c \le 10^5, t \le 10^9$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 453E
+
+- 先不考虑初始值，每个桶都从$0$开始。
+
+- 唯一的查询操作是"毁灭性"的: 查询以后一段区间的桶里水都变成$0$了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 453E
+
+- 查询：由于$d[i]$是固定的，一个区间从$0$开始的增长模式是固定的。
+
+- 离线所有询问，按照水被填满的时间进行排序并用树状数组维护序列，可以单调指针扫描得到查询答案。
+
+- 查询的同时要修改怎么做？每次修改以后一个区间就"同步"了！ODT暴力！
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 453E
+
+- 等等，初始值？
+
+- 初始值只影响到第一个覆盖到它的区间。这是一个区间染色问题。并查集。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### 随机ODT
+
+- 随机区间赋值等操作也自然满足期望意义下的"毁灭性"。
+
+- 而且......据说即使算上`map`，期望复杂度也是$O(q \log \log n)$呢！
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 896C
+
+- 区间加，区间赋值，查询区间第$k$小，查询区间$x$次方和$\mod y$，其中$x,y$每次询问不同。**操作随机**。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 896C
+
+- 条件反射: 一看到序列上的迷惑行为，就想到根号算法。 $\times 3$
+
+- 那就GG了。
+
+- 根号算法也维护不出来任意$x$次方和$\mod y$这样的骚操作啊喂！
+
+- 那随机ODT乱搞就是了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### 随机ODT
+
+- 随机ODT比想象中有用得多。即使是一个常规数据结构题，如果出题人造数据的时候没有防范ODT，那么也会被水过甚至艹标算哦！
+
+- 所以说序列数据结构题，带有"毁灭性"操作，不会做就ODT碰碰运气吧。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### Leftist(左偏树)
+
+- 左偏树是一种可并堆的实现: 支持合并两个堆，并维护最小值/最大值。
+
+- 左偏树是最简单的一种可并堆实现，核心程序只有一行代码。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### Leftist(左偏树)
+
+```c++
+inline int Merge(int a, int b)
+{
+    return
+    a&&b
+    ?
+        mx(a)<mx(b)?a^=b^=a^=b:0,
+        rc(a) = Merge(rc(a),b),
+        npl(lc(a))<npl(rc(a))
+        ?
+            lc(a)^=rc(a)^=lc(a)^=rc(a)
+        :0,
+        npl(a) = npl(rc(a))+1,
+        a
+    :a|b;
+}
+```
+
+总有人不认为这是1行代码。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### ZOJ 3512
+
+- 给定一个数列，修改最小幅度，使得数列非降
+
+- $n \le 5 \times 10^4$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### ZOJ 3512
+
+- 对于一个非降数列，~~放飞自我~~。
+
+- 对于一个非增数列，全都修改成中位数是最优的。
+
+- 对于一个一般数列，可以考虑成将整个数列划分为若干区间使得每个区间中位数不小于上一个区间。（非降数列就是单点区间）
+
+- 为了尽可能减小修改幅度，能拆就拆。如果区间中位数顺序不对，就需要(递归)合并。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### ZOJ 3512
+
+- 就需要支持: 有$n$个集合一开始只有一个数，查询集合中位数或合并两个集合。
+
+- 左偏树 + 动态中位数。
+
+- 注意到两个区间合并，只会让中位数增大，因此不需要维护两个堆，只维护小的一半(大根堆)即可。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### FhqTreap
+
+- 既然学会了左偏树，那马上就可以写出FhqTreap了！
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3224
+
+![](/img/data_structures_2/BZOJ3224.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3224
+
+line per function
+
+```c++
+// 省略头文件，宏定义和输入输出优化代码
+struct Node{int c[2],mx,sz; short w;}t[MAXN+5]; int rt, tot, n, l, x, r;
+#define New(v) (++tot,mx(tot)=v,sz(tot)=1,w(tot)=rand(),tot)
+#define Push(p) (sz(p) = sz(lc(p))+sz(rc(p))+1)
+inline int Merge(int a, int b)
+{return a&&b ? w(a)<w(b) ? rc(a) = Merge(rc(a),b), Push(a), a : (lc(b) = Merge(a,lc(b)), Push(b), b) : a|b;}
+inline void Splitv(int p, int v, int &a, int &b)
+{p ? mx(p) <= v ? a = p, Splitv(rc(p),v,rc(p),b) : (b = p, Splitv(lc(p),v,a,lc(p))), Push(p) : a = b = 0;}
+inline void Splitk(int p, int k, int &a, int &b)
+{p ? k > sz(lc(p)) ? a = p, Splitk(rc(p),k-sz(lc(p))-1,rc(p),b) : (b = p, Splitk(lc(p),k,a,lc(p))), Push(p) : a = b = 0;}
+inline void Insert(int v){Splitv(rt,v,l,r), rt = Merge(Merge(l,New(v)),r);}
+inline void Delete(int v){Splitv(rt,v,l,r), Splitv(l,v-1,l,x), x = Merge(lc(x),rc(x)), rt = Merge(Merge(l,x),r);}
+inline int Rank(int v){Splitv(rt,v-1,l,r), x = sz(l), rt = Merge(l,r); return x+1;}
+inline int Select(int k){Splitk(rt,k,l,r); for(x = l; rc(x); x = rc(x)); rt = Merge(l,r); return x;}
+int main()
+{
+    for(srand(20010818), n = read(); n--; )
+        switch(read())
+        {
+            case 1: Insert(read()); break;
+            case 2: Delete(read()); break;
+            case 3: Out(Rank(read())), Outc('\n'); break;
+            case 4: Out(mx(Select(read()))), Outc('\n'); break;
+            case 5: Out(mx(Select(Rank(read())-1))), Outc('\n'); break;
+            case 6: Out(mx(Select(Rank(read()+1)))), Outc('\n'); break;
+        }   _END; return 0;
+}
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1500
+
+![](/img/data_structures_2/BZOJ1500.jpg)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 2827
+
+- 二维平面上$n$个加权点：每次移动一个点。最后查询每个点「历史上和本点处于同一坐标的点权最大值」以及「历史上和本点同时处于同一坐标的点数目最大值」。
+
+- $n \le 3 \times 10^4, q \le 3 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 2827
+
+- 坐标没什么锤子用，离散化一下即可。
+
+- 有若干个集合，支持移动一个点，维护集合最大值，并支持将集合内的所有点的历史最值与当前最大值取$\max$。
+
+- 这个区间取底并不需要支持在线查询~~，所以不需要吉利FhqTreap什么的~~，直接打标记就行了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 338E
+
+- 给定长为$n$的序列$A[]$以及长为$m \le n$的序列$B[]$，查询$A[]$的每个长为$m$的区间能否和$B[]$构成二分图完备匹配，二分图两个点之间有边当且仅当$A[i]+B[j]$大于等于一个给定阈值。
+
+- $n,m \le 1.5 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces 338E
+
+- $B[] -= S$，就是对于$A[]$的每个子区间，判断能否从小到大匹配$B[]$从大到小，使得每个位置和$\ge 0$。
+
+- 可以预处理出$g[i]=j$表示$A[i]$最坏可以接受哪个$B[j]$，也就是说区间内不能有$g[i]$个元素比$A[i]$小。
+
+- 那么在值域上要维护**还可以**有多少个元素比$A[i]$小，并要求每个位置这个值都是非负数。
+
+- 就是插入、删除、区间加减1、查询最小值。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 区间FhqTreap
+
+- 就和动态开点线段树一样，值域平衡树也可以动态开点，插入一个二元组$(l,r)$来代表一个区间，修改时拆开。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Luogu 3960
+
+- $n \times m$方阵，每次取走$(x,y)$位置的值，先从右向左补齐，再从下向上补齐，然后将取走的数放回$(n,m)$。
+
+- $n,m,q \le 3 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Luogu 3960
+
+- 注意到只有最后一列会出现补齐问题，对最后一列单独维护，其他按行维护。
+
+- 区间FhqTreap实现平衡树动态开点。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Treap Union
+
+- 类似于线段树合并，FhqTreap也可以合并两个相互交错的集合，甚至更好写。
+
+```c++
+inline int Merge(int a, int b)
+{int x,y; return a&&b ? Lazy(a), Lazy(b), w(a)>w(b)?a^=b^=a^=b:0, Splitv(b,v(a),x,y), lc(a) = Merge(lc(a),x), rc(a) = Merge(rc(a),y), Push(a), a : a|b;}
+
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4552
+
+- 对一个序列每次进行区间升序或降序排序。最后只查询某一个位置的数字。强制在线。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### BZOJ 4552
+
+- 战术变色！
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4552
+
+- 操作具有"毁灭性": 每次排序以后一个区间就有序了，可以用一棵FhqTreap来维护（打翻转标记）。
+
+- 一次跨越不同FhqTreap的排序问题就是Treap Union。
+
+- 于是ODT套FhqTreap做Treap Union。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### HLD(重链剖分)
+
+```c++
+void DFS1(int p)
+{
+    dep[p]=dep[fa[p]]+1,sz[p]=1;
+    for(auto v:e[p])
+        v^fa[p]?fa[v]=p,DFS1(v),sz[p]+=sz[v],sz[v]>sz[hvy[p]]?hvy[p]=v:0:0;
+}
+void DFS2(int p)
+{
+    s[pos[p]=++d]=bot[p]=p;
+    hvy[p]?top[hvy[p]]=top[p],DFS2(hvy[p]),bot[p]=bot[hvy[p]]:0;
+    for(auto v:e[p])
+        v^fa[p]&&v^hvy[p]?top[v]=v,DFS2(v),0:0;
+}
+```
+
+为啥还是有人不认为这是2行代码。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### 链分治/DDP
+
+- 在树剖上按照重链和轻链分别进行DP。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 5210
+
+- 点带权树，修改点权或查询某个点子树内最大权连通子树。
+
+- $n,q \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 5210
+
+- 普通无修改DP，$f$表示包含$p$的最大权连通子树，$F$表示$p$子树内的最大权连通子树:
+
+![](/img/data_structures_2/BZOJ5210_1.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 5210
+
+- $f,F$意义不变，$g,G$只考虑轻儿子:
+
+![](/img/data_structures_2/BZOJ5210_2.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 5210
+
+- 修改的时候，所在重链只需要修改一个$g$。而$f$是$g$的最大后缀和（因为区间查询，还是要维护最大子段和）。对父重链的影响是同理的。
+
+- $G$采用一个集合而不是只留着一个最大值是为了方便支持删除操作。所在重链只需要修改一个$G$，$F$是$G$的最大子段和。
+
+- 因此树剖线段树维护$g,G$的最大子段和即可。集合$G$可以使用删除堆来实现。
+
+- 每次修改的线段树和删除堆是并行关系的，总复杂度$O(q \log^2 n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4911
+
+- 点带权树，修改点权或查询异或和恰好为$k$的连通子树数量。
+
+- $n,q \le 3 \times 10^4, A_i \le 2^7 = 2^w$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4911
+
+- ~~条件反射: 一看到异或，就想到按位操作。~~ $\times 2$
+
+- 然而这个问题不满足可加性：并不能把异或和恰好为某一位的连通子树数量取交什么的。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4911
+
+- 对于链的话......可以做吗？
+
+- 权值很小，可以对于每个权值维护出区间数量。像最大子段和那样合并两个区间。
+
+- 合并实际上是一个异或卷积$O({2^w}^2)$，用FWT可以优化到$O(w2^w)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4911
+
+![](/img/data_structures_2/FWT.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4911
+
+- 上树！
+
+- 链分治！
+
+- $f[i][j]$表示以$i$为根，异或和恰好为$j$的连通子树数。
+
+- $f[i] = w[i] \oplus \sum_{\oplus} (f[v]+1)$
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4911
+
+- 同样地，更改为$g[i][j]$只考虑轻链，则$f[i] = w[i] \oplus g[i] \oplus (f[hvy]+1)$。
+
+- 令$h[i] = w[i] \oplus g[i]$，则$f[i]$是$h[i]$的前缀异或卷积和。由于要支持修改还是要像最大子段和那样搞。
+
+![](/img/data_structures_2/BZOJ4911.png)
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### 点分治
+
+line per function
+
+```c++
+void DFS_rt(int p, int fa)
+{(mx[p]=max(mx[p],sum-sz[p]))<mx[rt]?rt=p:0; for(int u = fir[p], v; ~u; !book[v=e[u].to]&&v^fa?DFS_rt(v,p),0:0, u = e[u].nex);}
+void DFS_sz(int p, int fa)
+{sz[p] = 1; mx[p] = 0; for(int u = fir[p], v; ~u; !book[v=e[u].to]&&v^fa?DFS_sz(v,p),sz[p]+=sz[v],mx[p]=max(mx[p],sz[v]):0, u = e[u].nex);}
+void DCT(int p)
+{DFS_sz(p,0); sum = sz[p]; rt = p; DFS_rt(p,0); p = rt; book[p] = true; 
+ // Operations ......
+ for(int u = fir[p], v; ~u; !book[v=e[u].to]?DCT(v),0:0, u = e[u].nex);}
+```
+
+注意保证操作复杂度只能和$v$子树大小相关，而不是和$p$总大小相关。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### CodeChef PRIMEDST
+
+- 求一棵树上随机选两点，距离为质数的概率。
+
+- $n \le 5 \times 10^4$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### CodeChef PRIMEDST
+
+- 条件反射: 一看到树上路径计数，就想到点分治。
+
+- 考虑$p$子树问题和$v$子树问题的合并，要按照距离合并就是一个卷积。
+
+- 注意到要保证复杂度，FFT长度必须只能和$v$有关。可以将子树按照深度排序，保证$p$的长度永远不超过$v$。~~好像这题不排序也能水过去......~~
+
+- $O(n \log^2 n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 276
+
+- 边带权树，给定$K$求一条路径使得路径上边权均值最近接$K$。
+
+- $n \le 5 \times 10^4, K \le 10^{13}$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 276
+
+- 条件反射: 一看到均值限定，就想到分数规划。
+
+![](/img/data_structures_2/UOJ276.png)
+
+- 这个式子只和路径边权和与路径长度有关。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 276
+
+- 树上路径问题考虑点分治，就是要查询是否存在配对满足两条路径的两个值分别大于$0$和小于$0$。
+
+- 只要问是否满足即可，可以查询满足一个条件下另一个的最值。也就是说要支持插入和查询区间最大值。
+
+- FhqTreap即可。注意查询的其实是前后缀而非区间，也可以以用树状数组维护（注意要每次点分单独离散化保证复杂度）。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### AtCoder 3611
+
+- 点带权树，构造一个完全图满足$(u,v)$边权为$A[u]+A[v]+dis(u,v)$。求该完全图的最小生成树。
+
+- $n \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### AtCoder 3611
+
+- 注意到是完全图，那么每个点贪心连向最近邻就可以了。
+
+- 唯一的问题是有可能两个点互为最近邻，那么其中一个点就要换为次近邻，以此类推。
+
+- 对于每个点找不重复最近邻？（注意$u$的最近邻是$A[v]+dis(u,v)$意义下的）
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### AtCoder 3611
+
+- 事实上只要把边数控制在合理范围内，跑最小生成树就可以了。只需要放大范围放松条件找出所有可能的最近邻就行了。
+
+- 点分治过程是可以统计所有路径的，~~两两路径连边即可，~~最近邻一定在某个点分治处是最优路径。所以在每次点分治时子树所有点都连向最优路径(距离$p$最近的点)即可。
+
+- Kruskal总复杂度$O(n \log^2 n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 4182
+
+- 树上背包，每个点有一种物品，价值$w$、体积$v$、个数$a$。取了物品的点必须在树上连通。求容量为$m$的背包最大收益。
+
+- $n \le 500, m \le 4000, T \le 5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 4182
+
+- 普通树上背包：$f[p][m]$表示体积为$m$的背包在$p$子树内可以获得的最大收益。单调队列优化多重背包转移。复杂度$O(nm)$。
+
+- 现在要求选物品的点连通。要在树上选一个连通块，枚举根作为出发点。
+  
+- 为了保证连通，每次进入一个点的时候强制选一个物品。
+
+- 但是因为要枚举根，复杂度就变成$O(n^2m)$了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 4182
+
+- 注意到枚举根的过程会有很多重复，每个连通块都会被搜索若干次。
+
+- 不如要求每次枚举根使得连通块无交。
+
+- 可以点分治，让重心做根，并且只搜索子树。这样任何一个连通块都会被所包含的最浅重心搜索一次且仅一次。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### 动态点分治/点分治树
+
+- 多次查询/带修改的树上路径统计问题。
+
+- 点分治的过程得到了一棵高度为$O(\log n)$树结构（就在实现点分治的时候记录一下父亲就是了）。
+
+- 每次修改一个点只会影响一条路径的信息合并过程。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### COGS 1960
+
+- 点边带权二叉树，多次查询点权在$[l,r]$区间的所有点到某个点的距离和。强制在线。
+
+- $n \le 1.5 \times 10^5, q \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### COGS 1960
+
+- 点分治本身就是保证，所有路径总在某一个分治重心处出现一次且仅一次。
+
+- 那么所有到某一点$v$的路径，就是枚举$v$在点分治树上的祖先重新计算信息即可。
+
+- 就需要每个重心到父重心的距离，以及支持其子树内按照点权进行区间求和操作。
+
+- 没有修改，离散化前缀和，每次查询二分即可。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### COGS 1960
+
+- 等等，好像有哪里不对。点分治并不是一个连续结构，有可能会出现走到父重心再回来的现象。
+
+- 套路: 容斥，统计父重心答案时总是先减去本重心的贡献。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3730
+
+- 点带权树，修改一个点权值或查询树上距离某点不超过$k$的点的点权和。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3730
+
+- 和上一道题是一样的，点分治树上按照距离维护到重心的路径点权和。
+
+- 同样注意容斥，查询的时候每次加上父重心距离$\le k$的答案，就要再减去本重心距离$\le k-d$的答案，其中$d$是父重心和本重心的距离。
+
+- 注意边是不带权的，因此也不需要离散化（更不需要线段树动态开点），直接树状数组即可。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3924
+
+- 点带权树，修改一个点权值或询问树上所有点到加权重心的加权距离和。最大点度数不超过$d=20$。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3924
+
+- "所有点距离"这样的东西，还有多组询问，肯定是要点分治啊。
+
+- 考虑给定点查加权距离，和前面的题目是一样的：维护重心子树的点权和、加权距离和、以及到父重心的加权距离和。老样子，查询容斥。
+
+- 不过现在加权重心是不知道的。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3924
+
+- 想想重心是怎么找的：贪心移动。
+
+- 加权重心是一样的，不过例如一条链，移动距离有可能是$O(n)$的。
+
+- 那假如是一条链，怎么找加权重心呢。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3924
+
+- 二分啊！
+
+- 树上呢？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3924
+
+- 点分治结构本身就是一个深度不超过$O(\log n)$的索引结构。
+
+- 具体地，对于每个重心，考虑其在原树上的至多$d$个邻居，沿着最大邻居方向直接跳到该邻居所属的重心上。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### BZOJ 3924
+
+- 仔细算算复杂度，每次找加权重心要在$O(\log n)$高度的点分治树上跳跃，枚举$d$个点。每个点都要求一下所有点到它的距离，而这个是是点分治树上的一个查询操作是$O(\log^2 n)$的（这是因为每一步都要求重心到指定点的距离，需要做LCA）。总询问复杂度就有$O(qd \log^3 n)$。显然会爆炸。
+
+- 预处理RMQLCA，做到$O(1)$查询LCA，这样复杂度就只有$O(n \log n + qd \log^2 n)$了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 55
+
+- 点边带权树，每次插入一个叶子，并查询树上所有路径中有多少条满足「端点权值之和大于等于路径长度」。强制在线。
+
+- $n \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 55
+
+- 条件反射: 一看到树上路径计数，就想到点分治。 $\times 2$
+
+- 先不考虑修改，怎么搞「端点权值之和大于等于路径长度」这个条件？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 55
+
+- $v[i] + v[j] >= dis(i,j) = dep[i]+dep[j]-2 \cdot dep[LCA(i,j)]$。
+
+- $v[i]-dep[i] + 2 \cdot dep[LCA(i,j)] >= dep[j]-v[j]$。
+
+- 注意点分治的时候可以将分治重心看做根，所有路径的LCA都可以是分治重心，故$dep[LCA(i,j)] = 0$总是常数。
+
+- 那么可以用$dep[j]-v[j]$维护成数据结构，用$v[i]-dep[i]$做前缀和查询了。
+
+- 支持插入、前缀和的数据结构，可以FhqTreap。记得容斥。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 55
+
+- 插入似乎不是什么大问题，动态点分治，$O(\log n)$更新一下点分治树的信息就好了嘛。
+
+- 可是新插入的点如果都当成点分治树的叶子，会破坏点分治树的平衡，复杂度是没有保证的。
+
+- 如果允许离线的话，还可以提前建出点分治树，但是强制在线就不行了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 替罪羊树：最简陋的平衡树
+
+- 如果一棵树不平衡了，忍一忍。
+
+- 如果太不平衡了，重头再来吧。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 替罪羊树：最简陋的平衡树
+
+- 替罪羊树有一个人为设定的平衡因子$\alpha$。
+
+- 如果一个点发现某个子树大小占比超过了$\alpha$，那么这个点就重建整个子树为一个平衡二叉树。
+
+- 如果一次操作导致了多个点不平衡，就只重构最高的点。
+
+- 均摊$O(n \log n)$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#8B0000" -->
+
+### UniversalOJ 55
+
+- 把点分治树建成一棵替罪羊树！不平衡的情况下重做子区域的点分治！
+
+- 替罪羊均摊一个$O(\log n)$，点分树结构一个$O(\log n)$，内部套FhqTreap一个$O(\log n)$。总复杂度$O(n \log^3 n)$。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### LCT
+
+line per function
+
+```c++
+#define top(x) (lc(fa(x))^x&&rc(fa(x))^x)
+#define XY (x==rc(y))
+#define YZ (y==rc(z))
+#define RV(p) (swap(lc(p),rc(p)), rv(p) ^= 1)
+#define LZ(p) (p&&rv(p) ? RV(lc(p)), RV(rc(p)), rv(p) = 0 : 0)
+#define PS(p) (sm(p) = sm(lc(p))^sm(rc(p))^(p<=m), mn(p) = Tmin(p,Tmin(mn(lc(p)),mn(rc(p)))))
+inline void Rotate(int x){int y=fa(x),z=fa(y),k=top(y),w=XY,b=c(x,!w);b?fa(b)=y:0;c(y,w)=b;fa(y)=x;c(x,!w)=y;fa(x)=z;k?:c(z,YZ)=x;PS(y);PS(x);}
+inline void Splay(int x){for(int y,z;!top(x);y=fa(x),z=fa(y),top(y)?:LZ(z),LZ(y),LZ(x),!top(y)&&XY==YZ?Rotate(y),0:0,Rotate(x));LZ(x);}
+inline void Access(int p){for(int w;Splay(p),rc(p)=0,PS(p),w=fa(p);Splay(w),rc(w)=p,PS(w));} inline int Root(int p){for(Access(p);lc(p);p=lc(p));return Splay(p),p;}
+#define Evert(v) (Access(v), RV(v), Access(v))
+#define Link(v,w) (Evert(v), Access(w), fa(lc(v)=w)=v, PS(v))
+#define Cut(v,p) (Evert(p), Access(v), lc(v)=fa(lc(v))=0, PS(v))
+#define Qmin(a,b) (Evert(a), Access(b), mn(b))
+#define Qsum(a,b) (Evert(a), Access(b), sm(b))
+```
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### SPOJ QTREE6
+
+- 点黑白树，支持修改一个点的颜色，或查询有多少个节点到某一点的路径上颜色相同（包括端点）。
+
+- $n,q \le 10^5$。
+  
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### SPOJ QTREE6
+
+- 就是查询一个点所在的同色联通快大小。
+
+- 啊那就是LCT维护黑白两个森林就行了。
+
+- So easy!
+  
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### SPOJ QTREE6
+
+- ......个锤子！
+
+- 想想菊花图。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### SPOJ QTREE6
+
+- 事实上只需要每个黑色连通块加上那个白父亲，每个白色连通块加上那个黑父亲就行了。
+
+- 这样事实上树上的边永远存在在一个且仅一个LCT中。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 195
+
+- 有$n$棵树(一开始都有一个点)，每棵树上有一个光标。3种操作:
+
+- 1. $[l,r]$区间的树从光标处长出一个叶子，最小标号。
+
+- 2. $[l,r]$区间的树光标移动到$x$号节点，如果存在。
+
+- 3. 查询某棵树上两点之间的距离。
+
+- $n \le 10^5, q \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 195
+
+- 核心观察：每个点在树上的存在一定是一段或若干段(有若干操作引起的)连续区间，因为一次加叶子都是区间加。
+
+- 那么实际上进行2类操作时不需要考虑"如果存在"。可以一上来离线，统计出什么时候存在哪些点，然后将2类操作区间和节点存在区间取交就可以了。因为每个区间都是操作产生的，这样即使交集产生很多区间均摊复杂度(均摊到1类操作上)也是正确的。
+
+- 这时候如果不考虑一个光标的所在位置而只考虑光标的所在标号，操作2实际上和操作1独立了，时序无关了。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 195
+
+- 套路: 所求的问题满足可加性（例如本题单点查询）；无后效性（如上分析）；变化均摊（每次复制只进行了1次操作）。在这种情况下，**对操作进行差分**。 $\times 2$
+
+- 将按时间移动，改为按下标移动。
+
+- 这样，如果遇到了一个操作2，意味着原先的一个操作1错误了（忘记移动光标了），可以用LCT直接把错误的部分剪下来接到正确位置上！
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 195
+
+- 实现细节上，一个生长节点可以有无数个儿子，不能一个一个挪动。对于光标单独建一个虚点即可。
+
+- 查询距离？
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 195
+
+![](/img/data_structures_2/UOJ195.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 195
+
+- 有虚点不能直接Evert，但是仍然可以$dep[i]+dep[j]-dep[LCA(i,j)]$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### BZOJ 2759 ~~一道动态树的好题~~
+
+- 有$n$个方程形如$x[i] \equiv k[i] \cdot x[p[i]] + b[i] \pmod{10007}$。
+
+- 每次修改一个方程的$x,k,p,b$或查询某个$x$的解。
+
+- $n \le 3 \times 10^4, q\le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### BZOJ 2759 ~~一道动态树的好题~~
+
+- 每个点有一个$p[i]$，构成了一棵环套树。而那个环有$n$个变量和$n$个方程组，就有可能可以解出了。
+
+- 只需要维护出环上的解，下面每个变量解都可以线性地从环上推出来。
+
+- 所以现在要支持加边、删边、维护环上的方程解。考虑怎么LCT。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### BZOJ 2759 ~~一道动态树的好题~~
+
+- 环上随便删除一条边，记录下两个端点，就可以直接用LCT来维护了。
+
+- 例如之前的吉利线段树，方程代入关系是可以区间操作的。因此，在LCT的Aux树中，可以维护一个区间方程代入关系信息。
+
+- 这样如果Access一下这两个端点，那么查询Aux树根节点信息就可以得到两点之间的函数关系了。
+
+- 结合之前被删掉的那条边就获得了一个二元方程组。直接EXGCD解出。
+
+- 接着Access查询点即可再获得和查询点的函数关系。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### CodeChef PUSHFLOW
+
+- 给定一棵仙人掌，每次修改一条边的边权，或查询S到T的最大流。
+
+- $n \le 10^5, m,q \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### CodeChef PUSHFLOW
+
+- 树上最大流就是两点之间路径最小值。
+
+- 对于仙人掌的一个环就是两侧的最小值。
+
+- 可以删去一侧的最小值边整体加到另一侧上。
+
+- LCT加边、删边、路径加、查询路径$\min$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### BZOJ 5020
+
+- 给定一个森林，每个点有一个函数，支持加边、删边、修改函数、代入$x$查询路径函数和。
+
+![](/img/data_structures_2/BZOJ5020_1.png)
+
+- $n \le 10^5, m \le 2 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### BZOJ 5020
+
+![](/img/data_structures_2/BZOJ5020_2.png)
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### BZOJ 5020
+
+$$
+e^x \sim \sum_{n=0}^\infty \frac{1}{n!}x^n
+$$
+
+$$
+\sin x \sim \sum_{n=0}^\infty \frac{(-1)^n}{(2n+1)!}x^{2n+1}
+$$
+
+然后就是LCT裸题。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### LCT维护虚边信息
+
+- 换根子树和的解决方案
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### LCT维护虚边信息
+
+- 和链分治的思路一样呢。
+
+- 如果Access(x)，那么原树子树和就是$x$的Aux虚儿子的原树子树和加上$x$自己的点值。
+
+- 将这个值记录下来作为一个点的固有属性，然后维护链上和。
+
+- 只有在交换右儿子与虚儿子的时候会修改这个属性。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 207
+
+- 给定一棵树，支持改边，记录一个路径，从记录中删除一个路径，查询是否记录中的所有路径都经过一条给定边。
+
+- $n \le 10^5, q \le 3 \times 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 207
+
+- 对于静态的情况，树剖区间加，查询一条边权值是否是恰好是记录长度即可。
+
+- 但是有修改，路径会随着边的改变而改变。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 207
+
+- 一条路径经过一条边，当切仅当这个路径端点在边的两侧。
+
+- 因此就是相当于删掉查询边后，是否所有路径都有一个点在一棵树，一个点在另一棵树。
+
+- 唔这个`bitset`似乎不太行......
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### UniversalOJ 207
+
+- 但是可以哈希！给每条路径一个随机哈希值，然后查询是否两棵树子树异或和相等！
+
+- 于是就是加边、删边、单点修改权值、查询子树异或和。
+
+- LCT维护虚边信息。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### SPOJ QTREE7
+
+- 点黑白带权树，支持修改一个点的颜色或权值，或查询同色连通块最大点权。
+
+- $n,q \le 10^5$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### SPOJ QTREE7
+
+- 诶？这和QTREE6不一样么？
+
+- 哦要维护最大值啊。
+
+- 子树最大值。
+
+- 那......维护虚边信息吧。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### Codeforces 482E
+
+- 点带权有根树，每次修改一个点权，或:
+
+- 指定点$p,v$，如果$v$是$p$的祖先，把$p$及其子树提升为$v$的直接儿子；否则将$v$及其子树变成$p$的直接儿子。
+
+- 然后查询随机选择两个点LCA处权值的期望。
+
+- $n,q \le 5 \times 10^4$。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+### Codeforces 482E
+
+- 期望线性性: 枚举每个点作为LCA，计算方案数。
+
+- 像点分治那样合并，如果$p$的子树并上$v$的子树，答案就加上 两倍二者子树大小的乘积。
+
+===<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#9400D3" -->
+
+- 那么考虑删除/挂上一棵子树对答案的影响。
+
+- 两倍子树大小，乘以父亲点实链上虚儿子的子树加权和。
+
+- 总之就是要加边删边维护子树加权和了。
+
+- 那......维护虚边信息吧。
+ 
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+- 我们今天cover了:
+
+- 树状数组, 线段树及其变体, ST表, 根号算法, ODT, Leftist, FhqTreap, 链分治, 点分治, LCT......
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+![](/img/Magolor.png)
+
+网站二维码，欢迎访问<font color="#FFA500"><a href="https://magolor.cn/" target="_blank">Magolor</a></font>的博客。
+
+=====<font size=6px>
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+# The End
+
+# Thank You</script></section></div></div><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/js/head.min.js"></script><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/js/reveal.min.js"></script><script>Reveal.initialize({
+  mouseWheel: false,
+  transition: 'slide',
+  transitionSpeed: 'default',
+  parallaxBackgroundImage: '',
+  parallaxBackgroundSize: '',
+  parallaxBackgroundHorizontal: '',
+  parallaxBackgroundVertical: '',
+  markdown: {
+    smartypants: true
+  },
+  dependencies: [
+    { src: '/js/third-party/reveal/marked.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: '/js/third-party/reveal/markdown.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    // Syntax highlight for <code> elements
+    { src: '/js/third-party/reveal/highlight.min.js', async: true, callback: function() {
+      // issue #218
+      setTimeout(function () {
+        hljs.initHighlighting();
+      }, 0)
+    } },
+    // Zoom in and out with Alt+click
+    { src: '/js/third-party/reveal/zoom.min.js', async: true },
+    // Speaker notes
+    { src: '/js/third-party/reveal/notes.min.js', async: true },
+    // MathJax
+    { src: '/js/third-party/reveal/math.min.js', async: true }
+  ]
+});</script><script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>

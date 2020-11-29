@@ -1,0 +1,1057 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="Number Theory"><meta name="keywords" content><meta name="author" content="Magolor,undefined"><meta name="copyright" content="Magolor"><title>Number Theory | Magolor</title><link rel="shortcut icon" href="/Magolor-OC-trans-avatar-rd-64.ico"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/reveal.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/theme/night.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/css/zenburn.min.css"></head><body><div class="reveal"><div class="slides"><section data-markdown data-separator="=====" data-separator-vertical="===" data-charset="utf-8"><script type="text/template"><!-- .slide: data-background="#660874" -->
+
+## 数论
+
+## Number Theory
+
+#### 讲课人: Magolor
+
+=====
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+- 我们今天将会cover的内容:
+
+- GCD, LCM, 类欧几里得算法, 快速幂, 快速乘, EXGCD, 积性函数, 数论分块, 通用线性筛法, 调和枚举, 费马小定理, 欧拉定理, 扩展欧拉定理, CRT, EXCRT, 原根与指数, BSGS, nBSGS, 二次剩余, Cipolla, Lucas定理
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+- 一些非常不错但我们今天不会cover的内容(大概率超出NOIP范围):
+
+- 莫比乌斯反演, EXBSGS, 扩展Lucas定理, 杜教筛, ~~已退出历史舞台的~~洲阁筛, 拓展埃氏筛, Miller-Rabin, Pollard-$\rho$ ......
+
+- 这些内容可以在我的博客<font color="#FFA500"><a href="https://magolor.cn/2018/07/22/2018-07-22-blog-02/" target="_blank">OI资源分享</a></font>中找到。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### GCD与LCM
+
+```c++
+inline int GCD(int a, int b){return b?GCD(b,a%b):a;}
+```
+
+- $GCD(a,b) \times LCM(a,b) = a \times b$ 恒成立。想一想为啥成立？
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### GCD与LCM
+
+- 为啥GCD辗转相除法还要讲，这讲课太水了吧~
+
+- 我们来看一道简单的GCD辗转相除法问题。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### BZOJ 2987
+
+- 求不等式$ax+by \le c$的非负整数解数对$(x,y)$的数量。
+
+- $a,b \le 10^{9},c \le 10^{18}$。
+
+- 这和辗转相除法真的有关系吗？
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 类欧几里得算法
+
+- 答案是:
+
+![](/img/number_theory/Euclid1.png)
+
+- 实际上就是在$x \in [0,n]$的定义域内，在一条直线下方，$x$轴上方的整点数。怎么求呢？
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 类欧几里得算法
+
+- 首先直线可能存在负斜率，没有意义，只需要做一个中心对称即可。
+
+$y = c-ax \Leftrightarrow y = c \mod a + ax$
+
+- 然后要求的东西就是:
+
+![](/img/number_theory/Euclid2.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 类欧几里得算法
+
+![](/img/number_theory/Grid1.png)
+
+- 纵截距$\ge 1$($c \ge b$)，那么可以将这一部分取走。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 类欧几里得算法
+
+![](/img/number_theory/Grid2.png)
+
+- 如果斜率$\ge 1$($a \ge b$)，那么可以将下方$a/b$的整倍数取走。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 类欧几里得算法
+
+- 现在只需要考虑$a \lt c$且$b \lt c$的情况，用长方形减去梯形:
+
+![](/img/number_theory/Grid3.png)
+
+- 梯形？$x$和$y$轴对称一下就可以递归了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 类欧几里得算法
+
+- 这里就是介绍一下类欧几里得算法: 辗转相除的思想。
+
+- 具体的题目解法这里不再涉及，这道题的细节十分繁杂，感兴趣者可以在附件中或我的博客上查看实现细节。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 快速幂与快速乘
+
+```c++
+inline int fxp(int s, int n=MOD-2){int a=1;for(;n;n&1?a=1ll*a*s%MOD:0,s=1ll*s*s%MOD,n>>=1);return a;}
+```
+
+就一行
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 快速幂与快速乘
+
+```c++
+inline int fxp(int s, int n=MOD-2)
+{
+    int a = 1;
+    for(; n; n >>= 1)
+        n&1 ? a = 1ll*a*s%MOD : 0,
+        s = 1ll*s*s%MOD;
+    return a;
+}
+```
+
+展开看一下
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 快速幂与快速乘
+
+假 · 快速乘
+
+```c++
+inline int fml(int s, int n)
+{
+    int a = 0;
+    for(; n; n >>= 1)
+        n&1 ? a = (a+s)%MOD : 0,
+        s = (s<<1)%MOD;
+    return a;
+}
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 快速幂与快速乘
+
+真 · 快速乘 · version 1
+
+```c++
+#define M(a,b,MOD) ((long long)((__int128)a*b%MOD))
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 快速幂与快速乘
+
+真 · 快速乘 · version 2
+
+```c++
+#define M(a,b,P) ((a*b-(ll)((long double)a*b/P+.5)*P)%P+P)%P
+```
+
+这是因为$x \mod P = x - \left\lfloor\frac{x}{P}\right\rfloor \cdot P$
+
+=====
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### EXGCD
+
+求$ax + by = GCD(a,b)$的一组解$x,y$。
+
+```c++
+inline void EXGCD(ll a, ll b, ll &x, ll &y)
+{b ? EXGCD(b,a%b,y,x),y-=a/b*x : (x=1,y=0);}
+```
+
+实际上也是一行，为了显示方便换了个行
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### EXGCD
+
+- 因为$a \mod b = a - \left\lfloor\frac{a}{b}\right\rfloor \cdot b$，代入$by+(a\%b)x = GCD(b,a\%b)$。
+
+- 就解出: $by + ax - \left\lfloor\frac{a}{b}\right\rfloor \cdot bx = GCD(a,b)$
+
+- $ax + b(y-\left\lfloor\frac{a}{b}\right\rfloor x) = GCD(a,b)$
+
+- 因此$y' = y-\left\lfloor\frac{a}{b}\right\rfloor \cdot x, x' = x$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### EXGCD
+
+### LibreOJ 6392
+
+![](/img/number_theory/LOJ6392.png)
+
+$T \le 10^4$组数据，$2^8 \lt N = p \cdot q \lt 2^{63}$，保证$m \perp N$以及$e_1 \perp e_2$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+- 更正一下，下面是一个$m^{e_1}$一个$m^{e_2}$。
+
+![](/img/number_theory/LOJ6392_ans.jpg)
+
+=====
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 数论函数
+
+![](/img/number_theory/functions.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 两个小性质
+
+$$
+\sum_{d|n} \varphi(d) = n
+$$
+
+$$
+\sum_{d|n} \mu(d) = [n=1]
+$$
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 什么是积性函数
+
+$$
+\forall a \perp b, f(ab) = f(a)f(b)
+$$
+
+$\forall a \perp b$ :
+
+$$
+\varphi(ab) = \varphi(a)\varphi(b)
+$$
+
+$$
+\sigma_k(ab) = \sigma_k(a)\sigma_k(b)
+$$
+
+$$
+\mu(ab) = \mu(a)\mu(b)
+$$
+
+并尝试理解后两个式子成立的原因。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 数论分块
+
+$$
+\sum_{i=1}^n \left \lfloor \frac{n}{i} \right \rfloor
+$$
+
+- $n \le 10^{12}$
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 数论分块
+
+- 注意到$\left \lfloor \frac{n}{i} \right \rfloor$只有$O(\sqrt n)$种不同的取值，并且是连续的。
+
+- 如果能过快速找到下一次变化的点就好了。
+
+- 二分$O(\sqrt n \log n)$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 数论分块
+
+```c++
+for(rint j = 1, d; j <= n; d = n/(n/j), Ans += 1ll*(n/j)*(d-j+1), j = d+1);
+```
+
+- O($\sqrt n$)
+
+- 这可以用于求任意的$\sum f \left(\left \lfloor \frac{n}{i} \right \rfloor \right)$。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 线性筛$\varphi$
+
+```c++
+void Sieve()
+{
+    phi[1] = book[1] = 1;
+    for(rint i = 2, j, c; i <= M; i++)
+        for(book[i]?:phi[Pr[++tot]=i]=i-1,j=1; j<=tot && (c=i*Pr[j])<=M; j++)
+            if(book[c] = true, i%Pr[j])
+                phi[c] = phi[i]*~-Pr[j];
+            else
+               {phi[c] = phi[i]*Pr[j]; break;}
+}
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 线性筛$\varphi$
+
+```c++
+void Sieve()
+{
+    phi[1] = 1;
+    book[1] = true;
+    for(rint i = 2, j, c; i <= M; i++)
+    {
+        book[i]?:(phi[i]=i-1,Pr[++tot]=i);
+        for(j = 1; j<=tot && (c=i*Pr[j])<=M; j++)
+        {
+            book[c] = true;
+            if(i%Pr[j])
+                phi[c] = phi[i]*(Pr[j]-1);
+            else
+            {
+                phi[c] = phi[i]*Pr[j];
+                break;
+            }
+        }
+    }
+}
+```
+
+展开看一下。~~比原来更丑了对吧~~
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+```c++
+void Sieve()
+{
+    f[1] = 1; book[1] = true;
+    for(rint i = 2, j, c; i <= M; i++)
+        for(book[i]?:f[Pr[++tot]=i]=__A__,j=1; j<=tot && (c=i*Pr[j])<=M; j++)
+            if(book[c] = true, i%Pr[j])
+                f[c] = __B__;
+            else
+               {f[c] = __C__; break;}
+}
+```
+
+- 如果对于任意一个积性函数$f$我们都能求出A,B,C该写什么，我们就会做任意积性函数线性筛了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- A就是要求$f(p)$的值，其中$p \in \mathcal P$。
+
+- 下面以$\varphi$,$\mu$和$\sigma_k$函数为例:
+
+- $\varphi(p) = p-1$
+
+- $\mu(p) = -1$
+
+- $\sigma_k(p) = 1 + p^k$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- B就是要求$f(i \times p)$的值，其中$p \in \mathcal P, i \perp p$。
+
+- Emm...好难啊...怎么做呢...(强行卖萌.gif)
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 等等这不是积性函数么QwQ
+
+$f(i \times p) = f(i)f(p)$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- C就是要求$f(i \times p)$的值，其中$p \in \mathcal P, i \not \perp p$。
+
+- 因为$i$和$p$不互质，而$p$又是一个质数，总可以假设$i = a \times p^b$，那么这时候要求$f(a \times p^{b+1})$，发现两者就互质了。
+
+- 因此又总是有$f(i \times p) = f(a) \times f(p^{b+1})$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 于是问题变成要求$f(a)$和$f(p^{b+1})$。
+
+- 还记得欧拉筛为啥是$O(n)$的吗？
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 欧拉筛中的每个非质数，总是被它最小的质因子筛去的。
+
+- 那么对于非质数$i \times p$，它的最小质因子就是$p$。
+
+- 但是$i = a \times p^b$，所以$i$的最小质因子也是$p$(因为如果$a$中有一个质数比$p$更小，那么这个数就会理所当然地也成为$i \times p$的最小质因子，矛盾)。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 因此$i = a \times p^b$的最小值因子就是$p$。我们记两个新的数论函数:
+
+- $Pk(n)$表示$n$的最小质因子的次幂，这里也就有$b = Pk(i)$。
+
+- $Re(n)$表示$n$除去最小质因子的部分，这里也就有$a = Re(i)$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 所以最后这道题变成了求$Pk(n)$和$Re(n)$。这俩似乎不是积性函数。
+
+- 但是积性函数是用来干啥的？就是用来做步骤B的。现在这俩货的步骤B我们能不能做？
+
+- 为方便起见，我们记任何一个函数的线性筛法为一个三元组$(A,B,C)$，其中每一项就是该步骤的公式。不严谨地，我们记为$f(n) = (A,B,C)$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+```c++
+void Sieve()
+{
+    f[1] = __A__; book[1] = true;
+    for(rint i = 2, j, c; i <= M; i++)
+        for(book[i]?:f[Pr[++tot]=i]=__A__,j=1; j<=tot && (c=i*Pr[j])<=M; j++)
+            if(book[c] = true, i%Pr[j])
+                f[c] = __B__;
+            else
+               {f[c] = __C__; break;}
+}
+```
+
+- $Pk(n) = (1,1,Pk(i)+1)$
+
+- $Re(n) = (1,i,Re(i))$
+
+- $f(n) = (f(p),f(i) \times f(p),f(Re(i)) \times f(p^{Pk(i)+1}))$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 等等，$f(p^{Pk(i)+1})$？
+
+- 下面以$\varphi$,$\mu$和$\sigma_k$函数为例($x \gt 1$):
+
+- $\varphi(p^x) = p^x-p^{x-1}$
+
+- $\mu(p^x) = 0$
+
+- $\sigma(p^x) = \sum_{i=0}^xp^i = \frac{p^{x+1}-1}{p-1}$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 综上，对于任意一个积性函数$f$，只要可以快速求出$f(p^x)$，代入:
+
+- $f(n) = (f(p),f(i) \times f(p),f(Re(i)) \times f(p^{Pk(i)+1}))$
+
+- 就做完了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+### BZOJ 2693 (精简版)
+
+- 请求出$\forall i \in \lbrace 1,2,3,...,n \rbrace, f(i)$:
+
+$$
+f(n) = \sum_{d|n} \mu(d)d
+$$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+### BZOJ 2693 (精简版)
+
+$$
+f(n) = \sum_{d|n} \mu(d)d
+$$
+
+$$
+f(n) = (1-p,f(i)\times(1-p),f(Re(i))\times(1-p))
+$$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 通用线性筛法(from TYC)
+
+- 严格地来说这不是线性。因为$p^x$有一个快速幂$O(\log x)$复杂度。
+
+- 当然，大部分情况下可以直接记录$p^{Pk(i)}$而不是记录$Pk(i)$来优化掉这个$O(\log x)$的复杂度。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 调和枚举
+
+- 既然线性筛提到了$\sigma_k(n)$函数，我们来聊一聊约数。
+
+- 一个简单而常用的操作: 求$1,2,3,...,n$每个数字的约数集合。
+
+- 每个数枚举根号内的约数复杂度是$O(n \sqrt n)$的。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 调和枚举
+
+- 不如反过来枚举每个数的倍数。
+
+```c++
+for(rint i = 1, j; i <= n; i++)
+    for(j = i; j <= n; d[j].push_back(i), j += i);
+```
+
+- 正如它的名字一样，复杂度$O(\sum\left\lfloor\frac{n}{i}\right\rfloor) = O(n \ln n)$。
+
+- 这也是埃氏筛的思想。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 51Nod 1616
+
+- 集合$A$满足$\forall x,y \in A, GCD(x,y) \in A$，给定集合中的某些数字，求最小的可能集合。
+
+- $n,a_i \le 10^6$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 51Nod 1616
+
+- 暴力枚举两个数加入，复杂度是$O(Ans^2)$的。但是考虑GCD的某种"类传递性":
+
+- $c = GCD(a,b), e = GCD(c,d) \Leftrightarrow e = GCD(a,b,d)$
+
+- 即最终一个数x在最小原集合中当且仅当存在一些数GCD等于它。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 51Nod 1616
+
+- 补集转化一下，$x$不存在当且仅当不存在任何子集GCD等于它。这个又有两种情况: 存在某个子集GCD等于$kx(k>1)$，或不存在某个子集GCD等于$kx$。前者会使$kx$加入答案集合，后者也等价于没有数是$x$的倍数(因为子集大小可以是1)。
+
+- 于是可以枚举一个数的倍数求出$d[x]$表示GCD是$x$的倍数的子集个数，如果存在一个$d[kx]=d[x]$，意味着不会有子集拼出恰好$x$，那么$x$不在答案中，否则如果$d[x]$不为0，那么$x$一定在答案中。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### 51Nod 1616
+
+```c++
+n = rf(); for(rint a; n--; ++book[a=rf()], m = max(m,a));
+for(rint i = 1, j; i <= m; i++)
+    for(j = i; j <= m; d[i] += book[j], j += i);
+for(rint i = 1, j; i <= m; ans += d[i]&&j>m, i++)
+    if(d[i]) for(j = 2*i; j <= m; j += i) if(d[j] == d[i]) break;
+printf("%d\n",ans); return 0;
+```
+
+=====
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### 费马小定理
+
+$\forall p \in \mathcal P, a \perp p,$
+
+$a^{p-1} \equiv 1 \pmod p$
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### 欧拉定理
+
+$\forall n \in \mathbb N, a \perp n,$
+
+$a^{\varphi(n)} \equiv 1 \pmod n$
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### 扩展欧拉定理
+
+$\forall n \in \mathbb N_+, a \perp n,$
+
+![](/img/number_theory/ExEuler.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BZOJ 2749
+
+- 给定$m,p[],q[]$，对每个$i$求$N_i \prod p_i^{q_i}$，求取多少次$\varphi$以后会得到1。即求$\varphi^*(N_i)$。
+
+- $m \le p_i \le 10^5, q_i \le 10^9,T \le 50$组数据。
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BZOJ 2749
+
+- 注意到，只有$\varphi(2) = 1$，而其他$\gt 2$的数字的$\varphi$都是偶数，这说明而每次操作只要$N$不是奇数都要消去一个2。
+
+- 而因为欧拉函数总是偶数，说明任何时候2的个数总是足够消去的。所以操作次数等于消去2的个数$+[N是奇数]$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BZOJ 2749
+
+- 记$f[i]$表示对i迭代取phi到1的过程中乘了多少个$\frac{1}{2}$。
+
+- 对于2，有$f[2] = 1$。
+
+- 对于奇质数，进行一次$\varphi$不会有影响，$f[p] = f[p-1]$。
+
+- 对于$n = i \times p$，$f[n] = f[i]+f[p]$。
+
+- 所以答案就是$\sum q_if[p_i] + [N是奇数]$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BZOJ 3884
+
+求$2^{2^{2^{...}}} \mod p$
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BZOJ 3884
+
+- 扩展欧拉定理经典题:
+
+$$
+Ans(p) \equiv 2^{Ans(\varphi(p)) + \varphi(p)} \pmod p
+$$
+
+- 递归即可。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### CRT
+
+- 给定$n$个方程构成的同余方程组$x \equiv a_i \pmod{m_i}$。$m_i$两两互质。
+
+- 求最小的正整数解$x$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### CRT
+
+![](/img/number_theory/CRT.png)
+
+=====
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### EXCRT
+
+- 其实我不是很明白为啥CRT还没退出历史舞台。因为有一个比较简单而且通用的EXCRT。
+
+- 给定$n$个方程构成的同余方程组$x \equiv a_i \pmod{m_i}$。$m_i$<font color="#FF0000">并不保证</font>两两互质。
+
+- 求最小的正整数解$x$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### EXCRT
+
+- 两两合并:
+
+$$x = a_1 \pmod{m_1} \Leftrightarrow x = k_1m_1+a_1$$
+
+$$x = a_2 \pmod{m_2} \Leftrightarrow x = k_2m_2+a_2$$
+
+- 联立: $k_1m_1-k_2m_2 = a_2-a_1$
+
+- EXGCD求$ax+by = c$解出一组$k_1$和$k_2$(或无解)
+
+- 那么$x = k_1m_1+a_1$就是已知的了，于是合并:
+
+$$x = k_1m_1+a_1 \pmod{LCM(m_1,m_2)}$$
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### EXCRT
+
+- 注意EXGCD只求解$k_1m_1-k_2m_2=GCD(m_1,m_2)=d$。
+
+- 所以求出来的$k_1$是解$x \times \frac{a_2-a_1}{d}$。
+
+- 然后$k_1m_1$是可以爆```long long```的，需要先将$k_1$对$m_2/d$取模。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### EXCRT
+
+注意判断无解情况:
+
+```c++
+inline bool Merge()
+{
+    return (d = EXGCD(m1,m2,k1,k2), k2 = -k2,
+    !((a2-a1)%d)) ? a1 += (a2-a1)/d*k1%(m2/d)*m1,
+    m1 *= m2/d, a1 %= m1, true : false;
+}
+```
+
+明明就是一行。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### BZOJ 2976
+
+- 给定$n$个人做约瑟夫游戏: 从1开始报数1，报到数字$m$的出圈，下一个重新从1开始，已知第$i$个人是第$k_i$个出圈的。求最小的可能的$m$。$n \le 20$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### BZOJ 2976
+
+- 首先，已知第$k_i$个出圈的是$i$，暴力模拟出圈就知道: 第$k_i$个出圈的是位置为$x_i$的人(注意不是编号)
+
+- 那么就是方程组$m \equiv x_i \pmod{n-i+1}$。
+
+- EXCRT。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 原根与指数
+
+- 如果一个数$g$是质数$p$的原根，那么$g^i \mod p$的结果两两不同。也就是说$g^i \equiv j \pmod p$可以构建一个排列。
+
+- 这时候在模$p$意义下$j$的指数就是$\text{ind} j = i$，借鉴数学上对数函数的概念，我们可以认为这是在说$\log_{g} j = i$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 原根与指数
+
+- 怎么求原根？拓展到任意数字: 一个数$g$是$m$的原根，当且仅当对于$\varphi(m)$的所有质因子$p$:
+
+$$
+g^{\frac{\varphi(m)}{p}} \not \equiv 1 \pmod m
+$$
+
+- 质因数分解后枚举质因数判断即可，复杂度$O(质因数分解)$。
+
+- 注意一个数可以有多个原根。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 原根与指数
+
+- 原根是上古考点了，基本不要求掌握求原根了。
+
+- 主要用处还是在求$\log_g j$上，也就是说往往可以对于一个乘法问题转为加法问题来做，指数问题转为乘法问题来做。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 原根与指数
+
+- 常用的质数原根:
+
+- Wolfram Alpha
+
+- $10^9 + 7$的一个原根是$5$。$10^9 + 9$的一个原根是$13$。$998244353$的一个原根是$3$。$1004535809$的一个原根是$3$。$1061109589$的一个原根是$6$。$19260817$的一个原根是$15$。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BSGS
+
+- 接着原根的问题，现在给定质数$p$求出了$g$。对于一个给定$j$要求$\log_g j \equiv i \pmod p$的$i$的值。怎么做？
+
+- BSGS: Baby-Step-Giant-Step 大步小步法
+
+- 思想是分块暴力。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BSGS
+
+- 设$i = aK-b$。那么:
+
+$$
+g^i = g^{aK-b} \equiv j \pmod p
+$$
+
+$$
+g^{aK} \equiv j \cdot g^b \pmod p
+$$
+
+- 如果设$K = \sqrt p$。那么$a$和$b$都只有$\sqrt p$种。
+
+- 一个存在```map```里，另一个查```map```。
+
+- 复杂度$O(\sqrt p \log p)$。哈希表可以做$O(\sqrt p)$。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### nBSGS
+
+- 如果现在给定$n$个不同的$j$怎么办呢？
+
+- 一个一个做是$O(n \sqrt p)$的，太慢了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### nBSGS
+
+$$
+g^{aK} \equiv j \cdot g^b \pmod p
+$$
+
+- 注意到左边永远不变，如果设$K = \sqrt{\frac{p}{n}}$。那么$a$有$\sqrt{np}$个，预处理复杂度$O(\sqrt{np})$。
+
+- 右边只有$K$种不同值，做$n$次，复杂度$O(\sqrt{np})$。
+
+- 总复杂度就是$O(\sqrt{np})$了！
+
+=====
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 二次剩余与Cipolla
+
+- 二次剩余这东西不强求掌握，了解即可。
+
+勒让德记号:
+
+![](/img/number_theory/Legendre.png)
+
+- 对于与$p$互质的$n$，如果存在二次剩余，则$(n/p) = 1$，否则$(n/p) = -1$。只有这两个取值。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 二次剩余与Cipolla
+
+二次互反律:
+
+![](/img/number_theory/Reciprocity.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 二次剩余与Cipolla
+
+- 随机$a$使得$a^2-n$是非二次剩余(期望两次即可)。
+
+- 设虚数单位$\omega = \sqrt{a^2-n}$(设而不求)，所有数表示为$a+b\omega$。
+
+- 那么$\sqrt n = (a+\omega)^\frac{(p+1)}{2}$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### CodeChef FN
+
+- 求最小非负整数$n$(或输出无解)，满足$Fib(n) = C \pmod P$。其中$P$为十进制末尾为1或9的质数。
+
+- 提示: 满足这种条件的$P$一定满足: $\sqrt 5$存在。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### CodeChef FN
+
+- 二次互反律代入$q = 5$:
+
+![](/img/number_theory/Reciprocity.png)
+
+- 会发现$\sqrt 5$一定存在。$\sqrt 5$有什么特殊的呢？
+
+- $Fib(n) = \frac{1}{\sqrt 5}(\phi_1^n-\phi_2^n) \equiv C \pmod P$
+
+- 这里有$\phi_1 = \frac{1+\sqrt 5}{2}, \phi_2 = \frac{1-\sqrt 5}{2}$。满足$\phi_1\phi_2 = -1$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### CodeChef FN
+
+- 化简一下就会得到一个二次方程:
+
+$$
+\phi_1^{2n} - \sqrt 5C\phi_1^n - (-1)^n \equiv 0 \pmod P
+$$
+
+- 套用二次方程求根公式(Cipolla)可以解出$\phi_1^n$。
+
+- 然后BSGS可以解出$n$。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### Lucas定理
+
+![](/img/number_theory/Lucas.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### UniversalOJ 300
+
+![](/img/number_theory/UOJ300.png)
+
+$n \le 211985, a_i \le 233333$
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### UniversalOJ 300
+
+- $p = 2$的时候的Lucas定理:
+
+```c++
+C(n,m)&1 = C(n>>1,m>>1)*C(n&1,m&1)
+```
+
+- 然后枚举一下0和1发现这个值就是$[n\&m = m]$。
+
+- 也就是说，从给定的$n$个数字中选取若干个数字可以构成一个集合。要求有多少个集合，满足从大到小排序后每个数是前一个数的子集。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### UniversalOJ 300
+
+- $f[i][S]$表示前$i$个数的序列以数字$S$为最大值的集合个数。枚举$S$的子集，如果新数字出现在序列中，就加上这个方案数。
+
+```c++
+int f[233333+5], a[211985+5], p[233333+5], n, ans; 
+n = rf(); for(rint i = 1; i <= n; a[i] = rf(), f[a[i]] = 1, p[a[i]] = i, i++);
+for(rint i = 1, S, S_d; i <= n; i++)
+    for(S = a[i], S_d = (S-1)&S; S_d; S_d = (S_d-1)&S)
+        p[S_d] > i ? f[S_d] += f[S], f[S_d]<MOD?:f[S_d]-=MOD : 0;
+for(rint i = 1; i <= n; ans += f[a[i]], ans<MOD?:ans-=MOD, i++);
+```
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+![](/img/Magolor.png)
+
+网站二维码，欢迎访问<font color="#FFA500"><a href="https://magolor.cn/" target="_blank">Magolor</a></font>的博客。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+# The End
+
+# Thank You
+</script></section></div></div><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/js/head.min.js"></script><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/js/reveal.min.js"></script><script>Reveal.initialize({
+  mouseWheel: false,
+  transition: 'slide',
+  transitionSpeed: 'default',
+  parallaxBackgroundImage: '',
+  parallaxBackgroundSize: '',
+  parallaxBackgroundHorizontal: '',
+  parallaxBackgroundVertical: '',
+  markdown: {
+    smartypants: true
+  },
+  dependencies: [
+    { src: '/js/third-party/reveal/marked.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: '/js/third-party/reveal/markdown.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    // Syntax highlight for <code> elements
+    { src: '/js/third-party/reveal/highlight.min.js', async: true, callback: function() {
+      // issue #218
+      setTimeout(function () {
+        hljs.initHighlighting();
+      }, 0)
+    } },
+    // Zoom in and out with Alt+click
+    { src: '/js/third-party/reveal/zoom.min.js', async: true },
+    // Speaker notes
+    { src: '/js/third-party/reveal/notes.min.js', async: true },
+    // MathJax
+    { src: '/js/third-party/reveal/math.min.js', async: true }
+  ]
+});</script><script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>

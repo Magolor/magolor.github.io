@@ -1,0 +1,353 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="Internet Protocols &amp; Security"><meta name="keywords" content><meta name="author" content="Magolor,undefined"><meta name="copyright" content="Magolor"><title>Internet Protocols &amp; Security | Magolor</title><link rel="shortcut icon" href="/Magolor-OC-trans-avatar-rd-64.ico"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/reveal.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/theme/night.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/css/zenburn.min.css"></head><body><div class="reveal"><div class="slides"><section data-markdown data-separator="=====" data-separator-vertical="===" data-charset="utf-8"><script type="text/template"><!-- .slide: data-background="#660874" -->
+
+## Internet Protocols & Security
+
+#### by <font color="#FFA500"><a href="https://magolor.cn/" target="_blank">Magolor</a></font>
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+- <small>Disclaimer: <font color="#FFA500">NO</font> guarantee of the correctness of the following contents.</small>
+
+=====
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Four-Layer Approach to Internet Software
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+![](/img/protocols_security/layers_of_the_internet.png)
+
+- Four layers of the Internet
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Application Layer (at Origin)
+
+- **Components**: <font color="#FFA500">applications</font> and <font color="#FFA500">utility softwares</font>.
+
+- **Role**: prepares message and provides destination address.
+
+- The application layer may use the services of the <font color="#FFA500">name servers</font> within the Internet to translate mnemonic addresses used by humans into Internet-compatible <font color="#FFA500">IP addresses</font>.
+
+- Then handle the message to Transport Layer.
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Transport Layer (at Origin)
+
+- **Components**: protocols.
+
+- **Role**: chops message into <font color="#FFA500">packets</font>.
+
+- Format the message for transmission —— small segments with information (packets).
+
+- Then handle <font color="#FFA500">independent packets</font> to Network Layer.
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Network Layer (at Origin and Intermediate Stops)
+
+- **Components**: "Router".
+
+- **Role**: Network Layer at each intermediate stop determines the direction in which the packet should be forwarded.
+
+- Then handle it back to Link Layer to transfer the packet or decides that the packet has already reached its final destination.
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Link Layer (at Origin and Intermediate Stops)
+
+- **Components**: Physical devices for communication.
+
+- **Role**: Transfers the packet.
+
+- Deal with collision: <font color="#FFA500">CSMA/CD for Ethernet, CSMA/CA for WiFi</font> (actually that is part of the definition).
+
+- Handle the packet back to Network Layer at each intermediate stop and the final destination for it to make decision.
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Network Layer (at Final Destination)
+
+- **Role**: Detects that packet has reached its final destination (<font color="#FFA500">Hop Count</font> is needed here).
+
+- Then pass the packet up to Transport Layer.
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Transport Layer (at Final Destination)
+
+- **Role**: Collects packets and reassembles message.
+
+- Then pass the restored message up to Application Layer (<font color="#FFA500">Port Numbers</font> are needed here).
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+#### Application Layer (at Final Destination)
+
+- **Role**: Receives message (and react).
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Seven-Layer Approach to Internet Software
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+- <font color="#FFA500">TCP/IP protocol suite</font> is based on four-layer hierarchy.
+
+- <font color="#FFA500">Open System Interconnection (OSI)</font> produced by <font color="#FFA500">International Organization for Standardization (ISO)</font> is based on seven-layer hierarchy. The standard has been slow to replace the four-level point of view.
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+- ![](/img/protocols_security/7vs4.png)
+
+=====
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### The TCP/IP Protocol Suite
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+- **Recall**: Protocols: a set of rules by which activities are conducted for a network to function reliably. By developing and adopting protocol standards, vendors are able to build products for network applications that are compatible with products from other vendors.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### What is the TCP/IP Protocol Suite?
+
+- TCP: Transmission Control Protocol. TCP defines a version of the <font color="#FFA500">Transport Layer</font>.
+
+- IP: Internet Protocol (the same "IP" in "IP address").
+
+- <font color="#FFA500">TCP/IP $\ne$ TCP+IP !!!</font>
+
+- TCP/IP protocol suite is an <font color="#FFA500">entire collection</font> of protocols.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### UDP
+
+- UDP: User Datagram Protocol. UDP is another definition of <font color="#FFA500">Transport Layer</font>.
+  
+- <font color="#FFA500">Notice that while UDP is different from TCP, it is part of the TCP/IP protocol suite</font>.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### TCP vs UDP: General
+
+- TCP is more reliable but less efficient.
+
+- UDP is more efficient but less reliable.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### TCP vs UDP: Connection
+
+- Before sending a message, TCP transport layer sends its own message to the transport layer at final destination and wait for acknowledgement to establish a <font color="#FFA500">connection</font>.
+
+- UDP merely sends the message and forgets about it.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### TCP vs UDP: Retransmission
+
+- TCP: ![](/img/protocols_security/TCP_retransmission.png)
+
+- While UDP has already forgotten everything.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### TCP vs UDP: Control
+
+- TCP has <font color="#FFA500">flow control</font>: a TCP Transport Layer at a message's origin can <font color="#FFA500">reduce the rate at which it transmits segments</font> to keep from overwhelming its counterpart at the destination. (i.e.: the receiver control the sender)
+
+- TCP has <font color="#FFA500">congestion control</font>: a TCP Transport Layer at a message's origin can <font color="#FFA500">adjust its transmission rate to alleviate congestion</font> between it and the message's destination. (i.e.: the sender controls itself and transmission)
+
+- Meanwhile, UDP has neither.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### TCP vs UDP: Efficiency
+
+- Obviously, UDP is more efficient.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### TCP vs UDP: Application
+
+- Mail servers use TCP to transfer email.
+
+- DNS lookups, VoIP and other <font color="#FFA500">time sensitive</font> applications use UDP.
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### IP
+
+- Forwarding: Relaying packets through the Internet.
+
+- Routing: Updating the layer's forwarding table to reflect changing conditions (e.g.: malfunction or congestion).
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+#### IPv4 and IPv6
+
+- IPv4: 32-bit, 255.255.255.255.
+
+- IPv6: 128-bit, FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF.
+
+=====
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Attack and Anti-attack
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+#### Forms of Attack
+
+- Virus: Software stored and executed along a "host" program.
+
+- Worm: An autonomous program that transfers itself.
+
+- Trojan Horse: A disguised program that performs additional activities.
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+#### Forms of Attack
+
+- Spyware (Sniffing): Collects information secretly.
+
+- Phishing: Ask information directly with pretense.
+
+- Denial of Service (DoS) Attack: The process of overloading a computer with messages.
+
+- Spam: Unwanted messages.
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+#### Anti-attack
+
+- Firewall counters <font color="#FFA500">spoofing</font> (Trojan Horse, Spyware, Phishing and DoS Attack).
+
+- Anti-virus Software counters <font color="#FFA500">infection</font> (Virus, Worm and Spyware).
+
+- Proxy Server filters information coming in (e.g.: infection) and out (e.g.: intranet's internal structures).
+
+- Spam Filter filters Spam.
+
+- CERT: Computer Emergency Response Team.
+
+=====
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### Encryption
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+#### Encryption for Security
+
+- FTP $\Rightarrow$ FTPS.
+
+- telnet $\Rightarrow$ Secure Shell (SSH).
+
+- HTTP $\Rightarrow$ HTTPS = HTTP + Secure Sockets Layer/Transport Layer Security (SSL/TLS).
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+#### Public-key Encryption, Private-key Decryption
+
+- The most popular: RSA Algorithm.
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+#### Certificate Authorities
+
+- To ensure that the public-key you see is the correct one.
+
+- A <font color="#FFA500">certificate</font> is a package containing a party's name and that party's public key.
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+#### Authentication: Digital Signature
+
+- Private-key Encryption, Public-key Decryption.
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Reference
+
+- J. Glenn Brookshear and Dennis Brylow. Computer Science: An Overview, 12th edition. Pearson Education, 2015.
+
+- [日]上野宣. 《图解HTTP》. 人民邮电出版社, 2014.
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+![](/img/Magolor.png)
+
+网站二维码，欢迎访问<font color="#FFA500"><a href="https://magolor.cn/" target="_blank">Magolor</a></font>的博客。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+# The End
+
+# Thank You
+</script></section></div></div><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/js/head.min.js"></script><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/js/reveal.min.js"></script><script>Reveal.initialize({
+  mouseWheel: false,
+  transition: 'slide',
+  transitionSpeed: 'default',
+  parallaxBackgroundImage: '',
+  parallaxBackgroundSize: '',
+  parallaxBackgroundHorizontal: '',
+  parallaxBackgroundVertical: '',
+  markdown: {
+    smartypants: true
+  },
+  dependencies: [
+    { src: '/js/third-party/reveal/marked.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: '/js/third-party/reveal/markdown.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    // Syntax highlight for <code> elements
+    { src: '/js/third-party/reveal/highlight.min.js', async: true, callback: function() {
+      // issue #218
+      setTimeout(function () {
+        hljs.initHighlighting();
+      }, 0)
+    } },
+    // Zoom in and out with Alt+click
+    { src: '/js/third-party/reveal/zoom.min.js', async: true },
+    // Speaker notes
+    { src: '/js/third-party/reveal/notes.min.js', async: true },
+    // MathJax
+    { src: '/js/third-party/reveal/math.min.js', async: true }
+  ]
+});</script><script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>

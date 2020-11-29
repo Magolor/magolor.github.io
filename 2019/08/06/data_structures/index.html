@@ -1,0 +1,1082 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta name="generator" content="Hexo 3.9.0"><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="Data Structures"><meta name="keywords" content><meta name="author" content="Magolor,undefined"><meta name="copyright" content="Magolor"><title>Data Structures | Magolor</title><link rel="shortcut icon" href="/Magolor-OC-trans-avatar-rd-64.ico"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/reveal.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/css/theme/night.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/css/zenburn.min.css"></head><body><div class="reveal"><div class="slides"><section data-markdown data-separator="=====" data-separator-vertical="===" data-charset="utf-8"><script type="text/template"><!-- .slide: data-background="#660874" -->
+
+## 数据结构
+
+## Data Structures
+
+#### 讲课人: Magolor
+
+=====
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+- 我们今天将会cover的内容:
+
+- 基础数据结构, 树状数组, 简单线段树, 主席树, 扫描线, 二维数点, 单调栈, 单调队列, ST表, RMQ, 倍增LCA, RMQLCA, STL与BIF, 根号算法合集, ODT, Leftist, FhqTreap, HLD
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+- 一些非常不错但我们今天不会cover的内容(大概率超出NOIP范围):
+
+- 复杂线段树(李超树/吉利树/线段树合并/优化建图/模拟流/VEB/...), 线段树分治, 除FhqTreap以外的平衡树(Splay/替罪羊/Treap/红黑树/), LCT, 复杂莫队, 点分治结构, 树套树, 字符串数据结构(哈希/后缀数组/Trie/AC自动机/PAM/SAM...), dsu-on-tree...
+
+- 这些内容可以在我的博客<font color="#FFA500"><a href="https://magolor.cn/2018/07/22/2018-07-22-blog-02/" target="_blank">OI资源分享</a></font>中找到。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 基础数据结构: 栈，队列，链表
+
+- 本来想直接从树状数组开始的
+
+![](/img/data_structures/hly1.png)
+
+- 那就临时插进来一页吧
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 706E
+
+- $n \times m$矩形，$q$次操作，每次交换两个不相邻、不相交的子矩形(可以对角)。输出最后的矩形。
+
+- $n,m \le 1000,q \le 10000$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 706E
+
+- 二维链表
+
+- 可以用链表维护每个点右方、下方的点，每次操作只需要仔细修改矩形边界周围点的指针就可以了。
+
+- $O((n+m)q)$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 985E
+
+- 给定$n$个数，判断能否将其划分为若干集合$S_i$，满足: $\vert S_i \vert \ge k$，$\max\lbrace S_i\rbrace - \min\lbrace S_i\rbrace \le d$。
+
+- $1 \le k,n \le 5 \times 10^5, d \le 10^9$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 985E
+
+- 将数字从小到大排序，$f[i]$表示前$i$个数能否合法划分。
+
+```c++
+f[i] |= f[j] && (a[i]-a[j+1] <= d)
+```
+
+- 当$i$单调递增的时候，为了满足条件$a[i]-a[j+1] \le d$，$j$要单调递增。
+
+- 队列(滑动窗口)维护，只需要验证当前队列里是否有$K$个元素。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZOJ 3799
+
+- 给定序列$A$，$A[i] \lt 0$表示长度为$-A[i]$的空地，否则表示长度为$A[i]$的物品，一个物品可以被取走当且仅当其左右两侧的空地之和$\ge A[i]$。求取走$A[m]$的最小代价。
+
+- $1 \le m \le n \le 10^6, \vert A[i] \vert \le 10^6$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### ZOJ 3799
+
+- 手玩下
+
+```
+72 36 -2 18 1 -1 2 4 1 1 1 1 1 1 1 1
+1 1 1 -3 10 -5 1 1 1 1 1
+```
+
+=====
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 树状数组 <a href="https://magolor.cn/2018/08/27/2018-08-27-blog-01" target="_blank">树状数组黑科技讲义</a>
+
+- ```lowbit```函数: 获得```x```的最低位。
+
+- 例如```lowbit(1010) = 0010```。
+
+- 一种实现方式就是```x&-x```:
+
+- 即```lowbit(1010) = 1010 & 0110 = 0010```。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### 树状数组 <a href="https://magolor.cn/2018/08/27/2018-08-27-blog-01" target="_blank">树状数组黑科技讲义</a>
+
+- ```lowbit```有啥用？
+
+- 考虑一个数组，每个点$i$维护```[i-lowbit(i)+1,i]```的和。这样每个位置都被$O(\log n)$个节点覆盖，且每个前缀可以拆成$O(\log n)$个节点。
+
+树状数组这东西特别适合Excel演示。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树
+
+线段树这东西也特别适合Excel演示。
+
+```c++
+#define MAXN 262144
+#define lc(x) (x<<1)
+#define rc(x) (x<<1|1)
+#define mid (lef+rig>>1)
+#define PS(p) (t[p] = t[lc(p)]+t[rc(p)])
+#define TG(p,v) (l[p] += v, t[p] += v)
+#define LZ(p) (TG(lc(p),l[p]), TG(rc(p),l[p]), l[p] = 0)
+int t[524289], l[524289];
+```
+
+注意一下空间: 大小上界应该是$2^{\lceil{\log_2n}\rceil+1}$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树
+
+一行线段树是不可能的，不过可以line per function。
+
+```c++
+inline int QP(int p, int lef, int rig, int x)
+{return lef^rig?LZ(p),x<=mid?QP(lc(p),lef,mid,x):QP(rc(p),mid+1,rig,x):t[p];}
+inline void EP(int p, int lef, int rig, int x, int v)
+{lef^rig?LZ(p),x<=mid?EP(lc(p),lef,mid,x,v):EP(rc(p),mid+1,rig,x,v),PS(p):t[p]+=v;}
+inline int QS(int p, int lef, int rig, int L, int R)
+{return L^lef||R^rig?LZ(p),(L<=mid?QS(lc(p),lef,mid,L,min(mid,R)):0)+(R>mid?QS(rc(p),mid+1,rig,max(L,mid+1),R):0):t[p];}
+inline void ES(int p, int lef, int rig, int L, int R, int v)
+{L^lef||R^rig?LZ(p),L<=mid?ES(lc(p),lef,mid,L,min(mid,R),v),0:0,R>mid?ES(rc(p),mid+1,rig,max(L,mid+1),R,v),0:0,PS(p):TG(p,v);}
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树
+
+- 线段树的永久化标记
+
+- 和树状数组区别不大
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 51Nod 1598
+
+![](/img/data_structures/51Nod1598.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+- 假设所有$k$都等于$1$的时候怎么做？
+
+- 考虑绝对值的几何意义，即是一维数轴上存在若干个点，求一个点，使得其他点到这个点的距离和最小。每次插入一个数$b$，然后动态维护中位数以及距离和就可以了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 51Nod 1598
+
+- 那么有$\vert kx+b \vert = \vert k \vert \vert x+b/k \vert$，所以相当于一个加权距离(可以视作$b/k$位置有了$k$个点)。对所有坐标离散化，用线段树维护即可，查询时在线段树上二分。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 从给定的$n$个区间中选取$m$个，要求包含同一个位置，同时希望最长区间减最短区间值最小。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 区间选择问题考虑排序。这道题将区间按照长度排序。
+
+- 如果枚举选择区间的最长长度和最短长度，问题变成:
+
+- 选取编号$[L,R]$中的$m$个区间，求是否存在某个位置被覆盖$m$次。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 啊！就这么办！
+
+- 我们就有一个总复杂度$O(n^4)$的优秀算法啦！
+
+![](/img/data_structures/WTF.gif)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 不就是区间加么，线段树可以做到$O(n \log n)$！
+
+- 我们就有一个总复杂度$O(n^3 \log n)$的优秀算法啦！
+
+![](/img/data_structures/WTF.gif)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 简单改一改枚举顺序。
+
+- 我们就有一个总复杂度$O(n^2 \log n)$的优秀算法啦！
+
+![](/img/data_structures/WTF.gif)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 4653
+
+- 答案满足单调性。左端点递增，右端点也递增
+
+- 我们就有一个总复杂度$O(n \log n)$的优秀算法啦！
+
+![](/img/data_structures/WTF2.jpg)
+
+=====
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### 扫描线与二维数点
+
+- 二维平面上$n$个点$(x_i,y_i)$，多次查询，每次查询一个矩形内的点数。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### 扫描线与二维数点
+
+- 不妨将$x$这一维看做时间。矩形可以差分。
+
+- 随着时间递增，一些$y$被插入，一些$y$被删除。然后每次查询一些区间内的$y$的个数。
+
+咦......?
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### Codeforces 1191F
+
+- 给定平面上$n$个点，每次可以用$x \in [l,r],y \in [a,+\infty)$作为限制条件来得到一个点集。求能得到多少种不同的点集。
+
+- $n \le 10^5,x,y \le 10^9$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### Codeforces 1191F
+
+- 冷静一下: 如果$x$和$y$互不相同，那么任何一个点集由下端点、左端点和右端点唯一确定，且左右端点高于下端点。那么就有一个很简单的做法，对于每个点统计其左上方点数$l$和右上方点数$r$，以这个点为下顶点的点集就有$(l+1) \times (r+1)$个。统计一个点一侧的点数就是个二维数点，扫描线+离散化+树状数组就行了。$O(n \log n)$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4540
+
+- $m$组询问区间$[L,R]$的所有子区间的最小值的和。
+
+- $n,m \le 10^5$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4540
+
+- 可以用单调栈预处理出每个数作为最小值的区间，就可以计算每个数的贡献了。
+
+- 将区间视作二维平面点$(L,R)$，每个数都是一个矩阵区间加: $l_i \le L \le i, i \le R \le r_i$。
+
+- 每个区间的最小值是唯一的，每个区间都只会被一个数贡献到，那么这个贡献可以等价于区间加。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4540
+
+- 考虑$L \le R$，实际上是先进行若干矩形加法，然后查询若干直角三角形的和。
+
+- 点加法我们会了。矩形加法怎么做？
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### BZOJ 4540
+
+- 矩形加法实际上就是加了一个一次函数。
+
+- 分别维护斜率和以及纵截距和就好了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### LibreOJ 6302
+
+- $n \times m(n \ge m)$的01矩阵，单点修改或查询一个子矩形内部的最大全1正方形。
+
+- $n \times m \le 4×10^6, q \le 2000$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### LibreOJ 6302
+
+- 1: 无修改，查询全局最大全1长方形(悬线法DP)
+
+- 2: 无修改，查询全局最大全1正方形(稍稍改进)
+
+- 3: 无修改，查询子矩形最大全1正方形(二分+SGT/ST)
+
+- 4: 单点修改，查询全局最大全1正方形($m$线性算法)
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### LibreOJ 6302
+
+- 5: 单点修改，查询$[l,r]$行的最大全1正方形(GSS)
+
+- 6: 原问题(1+3+4+5 = 单调队列DP+二分+线段树GSS)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### 线段树
+
+- 咦？怎么又回到线段树了。
+
+- 线段树的持久化 —— 主席树(森林?)
+
+- 记录一下左右儿子和每棵树的根就好了
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces-Gym 215177H
+
+- 给定$n$个区间和先后出现的$m$个点，每个区间有一个$k_i$，对于每个点求其是多少个区间的第$k_i$个出现的点。
+
+- $n, m \le 2 \times 10^5$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### Codeforces-Gym 215177H
+
+- 强行扭曲的题意。不如直接对每个区间求其第$k_i$个点是啥。
+
+- 裸的主席树上二分查区间第$k$小。
+
+- 这道题还有整体二分做法(虽然会被卡常过不去)，感兴趣的可以自行了解。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### RMQ问题与ST表
+
+- 多次查询区间最小值。
+
+- $q \le 10^7$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### RMQ问题与ST表
+
+- 倍增思想，每个点维护向右$2^i$长度的区间最小值。
+
+- 复杂度$O(n \log n + q)$。
+
+```c++
+#define ST(i,j) ST[j][i]
+inline ll RMQ(int L, int R){return d=ilogb(R-L+1),min(ST(L,d),ST(R-(1<<d)+1,d));}
+
+for(rint j = 0, l, i; (l=1<<j) <= N; j++) for(i = 1; i+l-1 <= N; i++)
+    ST(i,j) = j ? min(ST(i,j-1),ST(i+(l>>1),j-1)) : a[i];
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### Codeforces 689D
+
+- 给定两个等长数组，求有多少个区间满足$\max\lbrace a \rbrace = \min\lbrace b \rbrace$。
+
+- $n \le 2 \times 10^5$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### Codeforces 689D
+
+- 固定左端点，随着右端点递增，$\max\lbrace a \rbrace$单调非降，$\min\lbrace b \rbrace$单调非增，可以二分出相等的区间。
+
+- 用ST表来进行区间最大和最小值的查询。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 多组询问整个序列有多少个子区间和$[L,R]$的$GCD$相同。
+
+- $n \le 10^5, a_i \le 10^9$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 如果只是求$[L,R]$的$GCD$，一个线段树就可以搞定了。
+
+- Claim: 固定一个端点的前后缀本质不同的$GCD$有$O(\log a_i)$种。(质数连乘)
+
+- Claim: 整个序列本质不同的$GCD$只有$O(n \log a_i)$种。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 那就把所有答案都求出来记下来吧。怎么找？固定端点二分$GCD$变化点。
+
+- 对于枚举的每个端点，二分$O(\log n)$，总共要二分$O(\log a_i)$次，每次查询的时候线段树$O(\log n)$，$GCD$是$O(\log a_i)$的。总复杂度近似为$O(n \log^4 n)$。也许还没暴力快。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- 注意幻灯片的颜色。
+
+- 我们现在在讲什么？
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### HDU 5726
+
+- ST表维护GCD。
+
+- 复杂度$O(n \log^3 n)$能过。
+
+- $5000\text{ms}$时限，最快的程序也要$1000\text{ms}$。而线段树可以说是有一个$10 \sim 20$的常数吧。所以一个$\log$决定命运也没啥奇怪的。
+
+===
+<!-- .slide: data-transition="convex" data-background="#FF7D00" -->
+
+### 二维ST
+
+- $f[i][2^j][2^k]$。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### LCA
+
+- 倍增的思想不仅可以用RMQ，还可以用于GCD，还可以用于LCA。
+
+- 每个点$x$倍增预处理$x$的$2^i$父亲即可。
+
+- 这就是倍增LCA，也称作$O(n \log n) - O(\log n)$ LCA。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### LCA
+
+- 其实RMQ问题和LCA问题总是有很密切的关联。
+
+- 求出欧拉序(每次进出一个节点时记录，总共$2n-2$个)，则$LCA(u,v)$是欧拉序下标在$u$第一次出现到$v$第一次出现这段区间内，深度最浅的点。这不就是区间最小值么。
+
+- 这就是RMQLCA，也称作$O(n \log n) - O(1)$ LCA。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### LCA
+
+- 当然有一种东西叫做$O(n) - O(1)$ LCA，其实也就是$O(n) - O(1)$ RMQ。
+
+- 不过Indirection太毒瘤了当然不要求掌握。
+
+- 感兴趣者请做ODT大佬的<a href="https://www.luogu.org/problemnew/show/P3793" target="_blank">LuoguP3793 由乃救爷爷</a>。
+
+===
+<!-- .slide: data-transition="convex" data-background="#8B2500" -->
+
+### LA
+
+- 多次询问一个点的$i$级祖先。
+
+- 显然作为倍增LCA的子问题，我们已经有了$O(n \log n) - O(\log n)$ LA。
+
+- 有没有$O(n \log n) - O(1)$ LA呢？
+
+=====
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### STL
+
+- 终于到了喜闻乐见的STL时间。
+
+- OI选手必须要知道的网站:
+
+    <a href="http://www.cplusplus.com" target="_blank">C++ Reference</a>
+
+    <a href="http://oeis.org" target="_blank">OEIS</a>
+
+    <a href="https://www.wolframalpha.com" target="_blank">Wolfram Alpha</a> 
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### STL
+
+- ```stack```、```queue```和```deque```啥的建议还是自己写吧，STL太慢了。
+
+- ```std::vector<Type>```
+
+- ```std::map<Type1,Type2> / unordered_map```
+
+- ```std::set<Type> / unordered_set```
+
+- ```std::bitset<Size>```
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BIF
+
+```c++
+generate(a+1,a+n+1,f)
+```
+
+```c++
+count(a+1,a+n+1,x)
+```
+
+```c++
+fill(a+1,a+n+1,x)
+```
+
+```c++
+accumulate(a+1,a+n+1,x)
+```
+
+```c++
+iota(a+1,a+n+1,x)
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BIF
+
+```c++
+partial_sum(a+1,a+n+1,b+1)
+```
+
+```c++
+innner_product(a+1,a+n+1,b+1,0)
+```
+
+```c++
+random_shuffle(a+1,a+n+1)
+```
+
+```c++
+rotate(a+1,a+i,a+n+1)
+```
+
+```c++
+inplace_merge(a+1,a+i,a+n+1)
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### BIF
+
+```c++
+unique(a+1,a+n+1) - a
+```
+
+```c++
+lower_bound(a+1,a+n+1,x) - a
+```
+
+```c++
+upper_bound(a+1,a+n+1,x) - a
+```
+
+```c++
+min_element(a+1,a+n+1) - a
+```
+
+```c++
+max_element(a+1,a+n+1) - a
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### xxxx_heap
+
+- 提到STL，无知的人们总会提到`priority_queue`。
+
+- 虽然不用手写堆，但是`priority_queue`实在是太慢了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### xxxx_heap
+
+- 能不能既不用手写堆，又保证快速呢？
+
+- <a href="http://www.cplusplus.com/reference/algorithm/make_heap/?kw=make_heap" target="_blank">make_heap</a>大法好!!!
+
+- 直接```make_heap```默认是大顶堆，可以改变比较函数。
+
+===
+<!-- .slide: data-transition="convex" data-background="#000000" -->
+
+### xxxx_heap
+
+小根堆的示范:
+
+```c++
+generate(a+1,a+n+1,rf); s = n;
+make_heap(a+1,a+s+1,greater<int>());
+
+pop_heap(a+1,a+s--+1,greater<int>());
+
+a[++s] = x, push_heap(a+1,a+s+1,greater<int>());
+```
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 分块
+
+- 说起来很简单，但大家总是写得太丑。
+
+```c++
+for(rint i = 1, j; i <= n; i += BLK)
+    for(I[i] = ++_, j = bl[i] = i, br[i] = min(i+BLK-1,n); j <= br[i]; j++)
+        bl[j] = bl[i], br[j] = br[i], I[j] = I[i];
+```
+
+- BLK一般取2的次幂会比较舒服。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 分块
+
+```c++
+inline void AD(int l, int r, int v)
+{
+    for(; bl[l]<l&&l<=r; c[l] += v, l++); for(; br[r]>r&&l<=r; c[r] += v, r--);
+    for(; l<=r; d[I[l]] += v, s[I[l]] += (br[l]-bl[l]+1)*v, l += BLK);
+}
+inline int QU(int l, int r)
+{
+    for(; bl[l]<l&&l<=r; Ans += c[r]+d[I[r]], l++);
+    for(; br[r]>r&&l<=r; Ans += c[r]+d[I[r]], r--);
+    for(; l<=r; Ans += s[I[l]], l += BLK);
+}
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 块状链表
+
+- 如何学习好块状链表？
+
+- 不学习块状链表。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 块状链表
+
+![](/img/data_structures/ORZJRYI.png)
+
+![](/img/data_structures/Giveup.jpg)
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 普通莫队
+
+![](/img/data_structures/hly2.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: 普通莫队
+
+- 当$n$和$m$不同阶时，注意莫队的复杂度是$O(n^2/S+mS)$所以块的大小应该取$O(\sqrt{n^2/m})$最优。总复杂度$O(n\sqrt m)$。
+
+- 莫队的灵魂
+
+```c++
+inline bool operator < (Q a, Q b)
+{return a.u^b.u?a.u<b.u:(a.u&1)^(a.r<b.r);}
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- $m$组询问区间$[l,r]$内权值在$[a,b]$之间的数字数和种类数。
+
+- $n \le 10^5, m \le 10^6$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- 数字数好做，不就是二维数点么。
+
+- 种类数就是莫队。复杂度$O(n \sqrt m \log n)$。
+
+- 还带个$\log$有点慢。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- 不用树状数组而用分块！
+
+- 诶，等等，这不是更慢了吗？
+
+- 经典直觉错误。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### BZOJ 3236
+
+- 分块修改是$O(1)$的，查询操作是$O(B)$的，其中$B$是块数目$B = n/S = \sqrt m$，但是查询操作并不大。
+
+- 总复杂度是$O(n \sqrt m + mB) = O((n+m) \sqrt m)$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### 根号算法: meet-in-the-middle
+
+- 与分块类似的思想，就是修改-查询平衡。
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 1017D
+
+- 给定长度为$m$的序列$a[]$和任意函数，求有多少个数字对，多次询问满足按位求和$\sum w_i[s_i = t_i]$不超过$k$的数字对$(s,t)$数目。
+
+- $q,m \le 5 \times 10^5$, $a_i \le 2^{12}$
+
+===
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+### Codeforces 1017D
+
+![](/img/data_structures/CF1017D.png)
+
+- <a href="https://magolor.cn/2018/08/05/2018-08-05-blog-01/" target="_blank">题解</a>
+
+=====
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### ODT(Old Driver Tree, 旧驱动~~树~~)
+
+- 题外话: 消防员是怎么扑灭森林火灾的？
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 981G
+
+- 有$n$个空的```multiset```。操作:
+
+- 1. 区间$[l,r]$内的每个集合，如果不含有$x$，就插入$x$；否则不插入$x$，将这个集合复制一遍。
+
+- 2. 查询$[l,r]$内集合的元素个数和。
+
+- $n,q \le 2 \times 10^5, 1 \le x \le n$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 981G
+
+- 修改操作是"毁灭性"的: 一旦插入了$x$，从此以后都会有$x$了。对于一个固定$x$，一旦执行过一次操作1，以后永远都是操作2了。
+
+- 直观地来说: 想想最坏情况。
+
+- 具体地: 付出的复杂度都被创建区间时的复杂度均摊掉了。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### Codeforces 981G
+
+- 在实践中往往用```map```来维护ODT。
+
+- 然后用线段树维护区间乘和区间加即可。
+
+===
+<!-- .slide: data-transition="convex" data-background="#1E90FF" -->
+
+### ODT(旧驱动)
+
+```c++
+typedef map<int,int> Map; typedef pair<Map::iterator,Map::iterator> pjj;
+struct ODT
+{
+    Map S; inline int Get(int p){return S.lower_bound(p)->second;} inline void Split(int x){int _ = Get(x); S[x] = _;}
+    inline pjj Range(int l, int r){Split(l-1); Split(r); return make_pair(S.find(l-1),S.find(r));}
+}A;
+
+pjj j = A.Range(l,r); for(; j.second!=j.first; OPERATION(j.second--->second));
+```
+
+=====
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### Leftist(左偏树)
+
+- 左偏树是一种可并堆的实现: 支持合并两个堆，并维护最小值/最大值。
+
+- 左偏树是最简单的一种可并堆实现，核心程序只有一行代码。
+
+===
+<!-- .slide: data-transition="convex" data-background="#008080" -->
+
+### Leftist(左偏树)
+
+```c++
+inline int Merge(int a, int b)
+{
+    return
+    a&&b
+    ?
+        mx(a)<mx(b)?a^=b^=a^=b:0,
+        rc(a) = Merge(rc(a),b),
+        npl(lc(a))<npl(rc(a))
+        ?
+            lc(a)^=rc(a)^=lc(a)^=rc(a)
+        :0,
+        npl(a) = npl(rc(a))+1,
+        a
+    :a|b;
+}
+```
+
+总有人不认为这是1行代码。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### FhqTreap
+
+- 既然学会了左偏树，那你们就已经具备了写一棵平衡树的能力。
+
+- 不要认为平衡树是什么很难写的数据结构。Splay的确是这样。Treap的确是这样。替罪羊的确是这样。但FhqTreap不是。
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3224
+
+![](/img/data_structures/BZOJ3224.png)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 3224
+
+```c++
+// 省略头文件，宏定义和输入输出优化代码
+struct Node{int c[2],mx,sz; short w;}t[MAXN+5]; int rt, tot, n, l, x, r;
+#define New(v) (++tot,mx(tot)=v,sz(tot)=1,w(tot)=rand(),tot)
+#define Push(p) (sz(p) = sz(lc(p))+sz(rc(p))+1)
+inline int Merge(int a, int b)
+{return a&&b ? w(a)<w(b) ? rc(a) = Merge(rc(a),b), Push(a), a : (lc(b) = Merge(a,lc(b)), Push(b), b) : a|b;}
+inline void Splitv(int p, int v, int &a, int &b)
+{p ? mx(p) <= v ? a = p, Splitv(rc(p),v,rc(p),b) : (b = p, Splitv(lc(p),v,a,lc(p))), Push(p) : a = b = 0;}
+inline void Splitk(int p, int k, int &a, int &b)
+{p ? k > sz(lc(p)) ? a = p, Splitk(rc(p),k-sz(lc(p))-1,rc(p),b) : (b = p, Splitk(lc(p),k,a,lc(p))), Push(p) : a = b = 0;}
+inline void Insert(int v){Splitv(rt,v,l,r), rt = Merge(Merge(l,New(v)),r);}
+inline void Delete(int v){Splitv(rt,v,l,r), Splitv(l,v-1,l,x), x = Merge(lc(x),rc(x)), rt = Merge(Merge(l,x),r);}
+inline int Rank(int v){Splitv(rt,v-1,l,r), x = sz(l), rt = Merge(l,r); return x+1;}
+inline int Select(int k){Splitk(rt,k,l,r); for(x = l; rc(x); x = rc(x)); rt = Merge(l,r); return x;}
+int main()
+{
+    for(srand(20010818), n = read(); n--; )
+        switch(read())
+        {
+            case 1: Insert(read()); break;
+            case 2: Delete(read()); break;
+            case 3: Out(Rank(read())), Outc('\n'); break;
+            case 4: Out(mx(Select(read()))), Outc('\n'); break;
+            case 5: Out(mx(Select(Rank(read())-1))), Outc('\n'); break;
+            case 6: Out(mx(Select(Rank(read()+1)))), Outc('\n'); break;
+        }   _END; return 0;
+}
+```
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1500
+
+![](/img/data_structures/BZOJ1500.jpg)
+
+===
+<!-- .slide: data-transition="convex" data-background="#2E8B57" -->
+
+### BZOJ 1500
+
+- 代码就不放了，感兴趣者可以在附件中或我的博客上查看。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### HLD(重链剖分)
+
+```c++
+void DFS1(int p)
+{
+    dep[p]=dep[fa[p]]+1,sz[p]=1;
+    for(auto v:e[p])
+        v^fa[p]?fa[v]=p,DFS1(v),sz[p]+=sz[v],sz[v]>sz[hvy[p]]?hvy[p]=v:0:0;
+}
+void DFS2(int p)
+{
+    s[pos[p]=++d]=bot[p]=p;
+    hvy[p]?top[hvy[p]]=top[p],DFS2(hvy[p]),bot[p]=bot[hvy[p]]:0;
+    for(auto v:e[p])
+        v^fa[p]&&v^hvy[p]?top[v]=v,DFS2(v),0:0;
+}
+```
+
+为啥还是有人不认为这是2行代码。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### Codeforces 966E
+
+- 给定点带权黑白树，每次翻转一个点的颜色并查询有多少个白点子树内黑点个数大于其点权。
+
+- $n,q \le 10^5$。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### Codeforces 966E
+
+- 将点权看做一个类似于"子树容量"的东西就很直观了。每个黑点相当于当前点到根的路径容量-1，求有多少个白点容量爆了(变为负数)。
+
+- 也就是支持将一条到根的路径+1或-1，忽略或恢复一个点(因为不统计爆容量的黑点)，查询整棵树上小于0的数字数。
+
+- 这可怎么做呢？
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### Codeforces 966E
+
+- 不会做？那就分块吧(注入灵魂)。
+
+- $O(n \sqrt n \log n)$。看上去很慢，但是能过。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### HLD(重链剖分)
+
+- 为啥非要按子树大小分啊？
+
+- 我随机分不行吗？$O(n)$。
+
+- 我按长度分不行吗？$O(\sqrt n)$。
+
+- 咦？根号有点意思。
+
+===
+<!-- .slide: data-transition="convex" data-background="#BDB76B" -->
+
+### LPD(长链剖分)
+
+- 还记得之前的LA问题吗？
+
+- 长链剖分 + 梯子算法。$O(n \log n) - O(1)$ LA。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+![](/img/Magolor.png)
+
+网站二维码，欢迎访问<font color="#FFA500"><a href="https://magolor.cn/" target="_blank">Magolor</a></font>的博客。
+
+=====
+<!-- .slide: data-transition="convex" data-background="#660874" -->
+
+# The End
+
+# Thank You
+</script></section></div></div><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/lib/js/head.min.js"></script><script src="https://cdn.jsdelivr.net/npm/reveal.js@3.6.0/js/reveal.min.js"></script><script>Reveal.initialize({
+  mouseWheel: false,
+  transition: 'slide',
+  transitionSpeed: 'default',
+  parallaxBackgroundImage: '',
+  parallaxBackgroundSize: '',
+  parallaxBackgroundHorizontal: '',
+  parallaxBackgroundVertical: '',
+  markdown: {
+    smartypants: true
+  },
+  dependencies: [
+    { src: '/js/third-party/reveal/marked.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: '/js/third-party/reveal/markdown.min.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    // Syntax highlight for <code> elements
+    { src: '/js/third-party/reveal/highlight.min.js', async: true, callback: function() {
+      // issue #218
+      setTimeout(function () {
+        hljs.initHighlighting();
+      }, 0)
+    } },
+    // Zoom in and out with Alt+click
+    { src: '/js/third-party/reveal/zoom.min.js', async: true },
+    // Speaker notes
+    { src: '/js/third-party/reveal/notes.min.js', async: true },
+    // MathJax
+    { src: '/js/third-party/reveal/math.min.js', async: true }
+  ]
+});</script><script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
